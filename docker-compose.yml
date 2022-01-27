@@ -24,3 +24,15 @@ services:
       context: ./webnetapp
     ports:
       - 80:80
+  callback_server:
+    build:
+      context: ./callback_server
+    ports:
+      - 8085:8080
+    volumes:
+      - ./callback_server:/usr/src/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    extra_hosts:
+      - host.docker.internal:host-gateway
