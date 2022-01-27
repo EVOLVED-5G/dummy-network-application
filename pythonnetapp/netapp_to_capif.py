@@ -9,8 +9,8 @@ REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
-def register_netapp_to_capif(username, password, role, description):
-    url = "http://host.docker.internal:8080/register"
+def register_netapp_to_capif(capif_ip, capif_port, username, password, role, description):
+    url = "http://{}:{}/register".format(capif_ip, capif_port)
 
     payload = dict()
     payload['username'] = username
@@ -31,8 +31,8 @@ def register_netapp_to_capif(username, password, role, description):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def get_capif_token(username, password, role):
-    url = "http://host.docker.internal:8080/gettoken"
+def get_capif_token(capif_ip, capif_port, username, password, role):
+    url = "http://{}:{}/gettoken".format(capif_ip, capif_port)
 
     payload = dict()
     payload['username'] = username
@@ -52,8 +52,8 @@ def get_capif_token(username, password, role):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def onboard_netapp_to_capif(jwt_token):
-    url = 'http://host.docker.internal:8080/api-invoker-management/v1/onboardedInvokers'
+def onboard_netapp_to_capif(capif_ip, capif_port, jwt_token):
+    url = 'http://{}:{}/api-invoker-management/v1/onboardedInvokers'.format(capif_ip, capif_port)
 
     payload = open('invoker_details.json', 'rb')
 
@@ -71,8 +71,8 @@ def onboard_netapp_to_capif(jwt_token):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def discover_service_apis(api_invoker_id, jwt_token):
-    url = "http://host.docker.internal:8080/service-apis/v1/allServiceAPIs?api-invoker-id={}".format(api_invoker_id)
+def discover_service_apis(capif_ip, capif_port, api_invoker_id, jwt_token):
+    url = "http://{}:{}/service-apis/v1/allServiceAPIs?api-invoker-id={}".format(capif_ip, capif_port, api_invoker_id)
 
     payload = {}
     files = {}
@@ -101,16 +101,18 @@ if __name__ == '__main__':
     )
 
     config = configparser.ConfigParser()
-    config.read('netapp.properties')
+    config.read('credentials.properties')
 
-    username = config.get("credentials", "username")
-    password = config.get("credentials", "password")
-    role = config.get("credentials", "role")
-    description = config.get("credentials", "description")
+    username = config.get("credentials", "invoker_username")
+    password = config.get("credentials", "invoker_password")
+    role = config.get("credentials", "invoker_role")
+    description = config.get("credentials", "invoker_description")
+    capif_ip = config.get("credentials", "capif_ip")
+    capif_port = config.get("credentials", "capif_port")
 
     try:
         if not r.exists('netappID'):
-            netappID = register_netapp_to_capif(username, password, role, description)
+            netappID = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description)
             r.set('netappID', netappID)
             print("NetAppID: {}\n".format(netappID))
     except Exception as e:
@@ -122,7 +124,7 @@ if __name__ == '__main__':
 
     try:
         if not r.exists('capif_access_token'):
-            capif_access_token = get_capif_token(username, password, role)
+            capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             r.set('capif_access_token', capif_access_token)
             print("Capif Token: {}\n".format(capif_access_token))
     except Exception as e:
@@ -136,16 +138,16 @@ if __name__ == '__main__':
     try:
         if not r.exists('invokerID'):
             capif_access_token = r.get('capif_access_token')
-            invokerID = onboard_netapp_to_capif(capif_access_token)
+            invokerID = onboard_netapp_to_capif(capif_ip, capif_port, capif_access_token)
             r.set('invokerID', invokerID)
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:
         status_code = e.args[1]
         if status_code == 401:
-            capif_access_token = get_capif_token(username, password, role)
+            capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             r.set('capif_access_token', capif_access_token)
             print("New Capif Token: {}\n".format(capif_access_token))
-            invokerID = onboard_netapp_to_capif(capif_access_token)
+            invokerID = onboard_netapp_to_capif(capif_ip, capif_port, capif_access_token)
             r.set('invokerID', invokerID)
             print("ApiInvokerID: {}\n".format(invokerID))
         elif status_code == 403:
@@ -158,17 +160,17 @@ if __name__ == '__main__':
         if r.exists('invokerID'):
             invokerID = r.get('invokerID')
             capif_access_token = r.get('capif_access_token')
-            discovered_apis = discover_service_apis(invokerID, capif_access_token)
+            discovered_apis = discover_service_apis(capif_ip, capif_port, invokerID, capif_access_token)
             print("Discovered APIs")
             print(json.dumps(discovered_apis, indent=2))
     except Exception as e:
         status_code = e.args[1]
         if status_code == 401:
-            capif_access_token = get_capif_token(username, password, role)
+            capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             r.set('capif_access_token', capif_access_token)
             print("New Capif Token: {}\n".format(capif_access_token))
             invokerID = r.get('invokerID')
-            discovered_apis = discover_service_apis(invokerID, capif_access_token)
+            discovered_apis = discover_service_apis(capif_ip, capif_port, invokerID, capif_access_token)
             print(json.dumps(discovered_apis, indent=2))
         elif status_code == 403:
             print("API Invoker does not exist. API Invoker id not found")
