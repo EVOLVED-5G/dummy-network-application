@@ -19,7 +19,7 @@ r = redis.Redis(
 app = Flask(__name__)
 
 
-@app.route("/monitoringcallback", methods=["POST"])
+@app.route("/callbacks", methods=["POST"])
 def monitoringcallback():
     if not r.exists('callback_counter'):
         callback_counter = 0
