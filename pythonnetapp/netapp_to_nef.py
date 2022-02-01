@@ -93,6 +93,36 @@ def sessionqos_subscription(nef_ip, nef_port, callback_ip, callback_port, access
     return parsed
 
 
+def qos_characteristics(nef_ip, nef_port, access_token):
+
+    url = "http://{}:{}/api/v1/qosInfo/qosCharacteristics".format(nef_ip, nef_port)
+
+    headers = {
+        'Content-Type': 'application/json',
+        "Authorization": "Bearer " + access_token
+    }
+
+    response = requests.request('GET', url, headers=headers)
+    parsed = json.loads(response.text)
+
+    return parsed
+
+
+def qos_profiles(nef_ip, nef_port, access_token):
+
+    url = "http://{}:{}/api/v1/qosInfo/qosProfiles/AAAAA1".format(nef_ip, nef_port)
+
+    headers = {
+        'Content-Type': 'application/json',
+        "Authorization": "Bearer " + access_token
+    }
+
+    response = requests.request('GET', url, headers=headers)
+    parsed = json.loads(response.text)
+
+    return parsed
+
+
 if __name__ == '__main__':
 
     r = redis.Redis(
@@ -143,6 +173,21 @@ if __name__ == '__main__':
             print("\nOr the following command (outside the container):")
             sub_resource_a = re.sub(r'(host.docker.internal)', 'localhost', sub_resource)
             print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_a, nef_access_token))
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+
+    try:
+        nef_access_token = r.get('nef_access_token')
+        ans = input("Do you want to test QoS Information APIs? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            last_response_from_nef = qos_characteristics(nef_ip, nef_port, nef_access_token)
+            r.set('last_response_from_nef', str(last_response_from_nef))
+            print("{}\n".format(last_response_from_nef))
+            last_response_from_nef = qos_profiles(nef_ip, nef_port, nef_access_token)
+            r.set('last_response_from_nef', str(last_response_from_nef))
+            print("{}\n".format(last_response_from_nef))
     except Exception as e:
         status_code = e.args[1]
         print(e)
