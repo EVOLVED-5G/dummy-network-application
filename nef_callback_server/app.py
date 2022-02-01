@@ -19,18 +19,18 @@ r = redis.Redis(
 app = Flask(__name__)
 
 
-@app.route("/callbacks", methods=["POST"])
-def monitoringcallback():
-    if not r.exists('callback_counter'):
+@app.route("/nefcallbacks", methods=["POST"])
+def nefcallback():
+    if not r.exists('nef_callback_counter'):
         callback_counter = 0
-        r.set('callback_counter', callback_counter)
-    callback_counter = int(r.get('callback_counter'))
+        r.set('nef_callback_counter', callback_counter)
+    callback_counter = int(r.get('nef_callback_counter'))
 
-    r.set('callback:'+str(callback_counter), str(request.json))
+    r.set('nef_callback:'+str(callback_counter), str(request.json))
     callback_counter += 1
-    r.set('callback_counter', str(callback_counter))
+    r.set('nef_callback_counter', str(callback_counter))
 
-    result = r.get('callback:' + str(callback_counter-1))
+    result = r.get('nef_callback:' + str(callback_counter-1))
     print(result)
 
     return jsonify(message=result), 201

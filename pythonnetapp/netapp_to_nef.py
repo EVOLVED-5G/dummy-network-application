@@ -29,7 +29,7 @@ def monitor_subscription(nef_ip, nef_port, callback_ip, callback_port, times, ac
     url = "http://{}:{}/api/v1/3gpp-monitoring-event/v1/myNetapp/subscriptions".format(nef_ip, nef_port)
     payload = json.dumps({
         "externalId": "10001@domain.com",
-        "notificationDestination": "http://{}:{}/callbacks".format(callback_ip, callback_port),
+        "notificationDestination": "http://{}:{}/nefcallbacks".format(callback_ip, callback_port),
         "monitoringType": "LOCATION_REPORTING",
         "maximumNumberOfReports": times,
         "monitorExpireTime": monitoringExpireTime
@@ -51,7 +51,7 @@ def sessionqos_subscription(nef_ip, nef_port, callback_ip, callback_port, access
     url = "http://{}:{}/api/v1/3gpp-as-session-with-qos/v1/myNetApp/subscriptions".format(nef_ip, nef_port)
     payload = json.dumps({
         "ipv4Addr": "10.0.0.1",
-        "notificationDestination": "http://{}:{}/callbacks".format(callback_ip, callback_port),
+        "notificationDestination": "http://{}:{}/nefcallbacks".format(callback_ip, callback_port),
         "snssai": {
             "sst": 1,
             "sd": "000001"

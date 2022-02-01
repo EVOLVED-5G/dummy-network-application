@@ -2,12 +2,13 @@
 
 ## Architecture
 
-| Container       | Folder          | Description                                      |
-|-----------------|-----------------|--------------------------------------------------|
-| python_netapp   | pythonnetapp    | Python NetApp (communication example with CAPIF) |
-| redis           | -               | DB to store info exchanged with CAPIF            |
-| web_netapp      | webnetapp       | HTML NetApp                                      |
-| callback_server | callback_server | Server implementing NEF callback endpoints       |
+| Container             | Folder                | Description                                      |
+|-----------------------|-----------------------|--------------------------------------------------|
+| python_netapp         | pythonnetapp          | Python NetApp (communication example with CAPIF) |
+| redis                 | -                     | DB to store info exchanged with CAPIF            |
+| web_netapp            | webnetapp             | HTML NetApp                                      |
+| nef_callback_server   | nef_callback_server   | Server implementing NEF callback endpoints       |
+| capif_callback_server | capif_callback_server | Server implementing CAPIF callback endpoints     |
 
 
 ## Container management
