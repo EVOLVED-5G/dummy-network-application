@@ -8,6 +8,39 @@ import os
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
+from OpenSSL.SSL import FILETYPE_PEM
+from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, load_publickey, PKey, TYPE_RSA, X509Req, dump_publickey)
+
+
+def create_csr(csr_file_path):
+    private_key_path = "privada.key"
+
+    # create public/private key
+    key = PKey()
+    key.generate_key(TYPE_RSA, 2048)
+
+    # Generate CSR
+    req = X509Req()
+    req.get_subject().CN = 'pasajero13'
+    req.get_subject().O = 'Telefonica I+D'
+    req.get_subject().OU = 'Innovation'
+    req.get_subject().L = 'Madrid'
+    req.get_subject().ST = 'Madrid'
+    req.get_subject().C = 'ES'
+    req.get_subject().emailAddress = 'inno@tid.es'
+    req.set_pubkey(key)
+    req.sign(key, 'sha256')
+
+    with open(csr_file_path, 'wb+') as f:
+        f.write(dump_certificate_request(FILETYPE_PEM, req))
+        csr_request = dump_certificate_request(FILETYPE_PEM, req)
+    with open(private_key_path, 'wb+') as f:
+        f.write(dump_privatekey(FILETYPE_PEM, key))
+        private_key = dump_privatekey(FILETYPE_PEM, key)
+        public_key = dump_publickey(FILETYPE_PEM, key)
+
+    return csr_request, private_key, public_key
+
 
 def register_netapp_to_capif(capif_ip, capif_port, username, password, role, description):
     url = "http://{}:{}/register".format(capif_ip, capif_port)
@@ -52,10 +85,17 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def onboard_netapp_to_capif(capif_ip, capif_port, jwt_token):
+def onboard_netapp_to_capif(capif_ip, capif_port, capif_callback_ip, capif_callback_port, jwt_token):
     url = 'http://{}:{}/api-invoker-management/v1/onboardedInvokers'.format(capif_ip, capif_port)
 
-    payload = open('invoker_details.json', 'rb')
+    csr_request, private_key, public_key = create_csr("solicitud.csr")
+
+    json_file = open('invoker_details.json', 'rb')
+    payload_dict = json.load(json_file)
+    payload_dict['onboardingInformation']['apiInvokerPublicKey'] = csr_request.decode("utf-8")
+    payload_dict['notificationDestination'] = payload_dict['notificationDestination'].replace("X", capif_callback_ip)
+    payload_dict['notificationDestination'] = payload_dict['notificationDestination'].replace("Y", capif_callback_port)
+    payload = json.dumps(payload_dict)
 
     headers = {
         'Authorization': 'Bearer {}'.format(jwt_token),
@@ -109,6 +149,8 @@ if __name__ == '__main__':
     description = config.get("credentials", "invoker_description")
     capif_ip = config.get("credentials", "capif_ip")
     capif_port = config.get("credentials", "capif_port")
+    capif_callback_ip = config.get("credentials", "capif_callback_ip")
+    capif_callback_port = config.get("credentials", "capif_callback_port")
 
     try:
         if not r.exists('netappID'):
@@ -138,7 +180,7 @@ if __name__ == '__main__':
     try:
         if not r.exists('invokerID'):
             capif_access_token = r.get('capif_access_token')
-            invokerID = onboard_netapp_to_capif(capif_ip, capif_port, capif_access_token)
+            invokerID = onboard_netapp_to_capif(capif_ip, capif_port, capif_callback_ip, capif_callback_port, capif_access_token)
             r.set('invokerID', invokerID)
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:

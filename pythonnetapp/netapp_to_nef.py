@@ -136,8 +136,8 @@ if __name__ == '__main__':
 
     nef_ip = config.get("credentials", "nef_ip")
     nef_port = config.get("credentials", "nef_port")
-    callback_ip = config.get("credentials", "callback_ip")
-    callback_port = config.get("credentials", "callback_port")
+    callback_ip = config.get("credentials", "nef_callback_ip")
+    callback_port = config.get("credentials", "nef_callback_port")
 
     try:
         if not r.exists('nef_access_token'):
