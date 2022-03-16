@@ -27,7 +27,7 @@ def register_apf_to_capif(capif_ip, capif_port, username, password, role, descri
         response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
         response_payload = json.loads(response.text)
-        return response_payload['id']
+        return response_payload['id'], response_payload['capif_ca_crt'], response_payload['ccf_publish_url']
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
 
@@ -53,8 +53,8 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def publish_service_api_to_capif(capif_ip, capif_port, apf_id, jwt_token):
-    url = 'http://{}:{}/published-apis/v1/{}/service-apis'.format(capif_ip, capif_port, apf_id)
+def publish_service_api_to_capif(capif_ip, capif_port, jwt_token, ccf_url):
+    url = 'http://{}:{}/{}'.format(capif_ip, capif_port, ccf_url)
 
     payload = open('service_api_description.json', 'rb')
 
@@ -94,9 +94,12 @@ if __name__ == '__main__':
 
     try:
         if not r.exists('apfID'):
-            apfID = register_apf_to_capif(capif_ip, capif_port, username, password, role, description)
+            apfID, capif_ca_crt, ccf_publish_url = register_apf_to_capif(capif_ip, capif_port, username, password, role, description)
             r.set('apfID', apfID)
+            r.set('capif_ca_crt', capif_ca_crt)
+            r.set('ccf_publish_url', ccf_publish_url)
             print("APF ID: {}".format(apfID))
+            print("CA Root Certificate: {}".format(capif_ca_crt))
     except Exception as e:
         status_code = e.args[1]
         if status_code == 409:
@@ -119,9 +122,10 @@ if __name__ == '__main__':
 
     try:
         if r.exists('apfID'):
-            apfID = r.get('apfID')
+            # apfID = r.get('apfID')
+            ccf_publish_url = r.get('ccf_publish_url')
             capif_access_token = r.get('capif_access_token_apf')
-            service_api_id = publish_service_api_to_capif(capif_ip, capif_port, apfID, capif_access_token)
+            service_api_id = publish_service_api_to_capif(capif_ip, capif_port, capif_access_token, ccf_publish_url)
             if not r.exists('services_num'):
                 services_num = 0
             else:
