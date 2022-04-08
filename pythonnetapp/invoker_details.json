@@ -1,7 +1,7 @@
 {
   "notificationDestination" : "http://X:Y/netapp_callback",
   "supportedFeatures" : "fffffff",
-  "apiInvokerInformation" : "Dummy NetApp",
+  "apiInvokerInformation" : "dummy",
   "websockNotifConfig" : {
     "requestWebsocketUri" : true,
     "websocketUri" : "websocketUri"
