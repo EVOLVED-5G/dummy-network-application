@@ -13,7 +13,7 @@ from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, load_publ
 
 
 def create_csr(csr_file_path):
-    private_key_path = "privada.key"
+    private_key_path = "private.key"
 
     # create public/private key
     key = PKey()
@@ -21,7 +21,7 @@ def create_csr(csr_file_path):
 
     # Generate CSR
     req = X509Req()
-    req.get_subject().CN = 'pasajero13'
+    req.get_subject().CN = 'dummy'
     req.get_subject().O = 'Telefonica I+D'
     req.get_subject().OU = 'Innovation'
     req.get_subject().L = 'Madrid'
@@ -84,7 +84,8 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
 
 
 def onboard_netapp_to_capif(capif_ip, capif_port, capif_callback_ip, capif_callback_port, jwt_token, ccf_url):
-    url = 'http://{}:{}/{}'.format(capif_ip, capif_port, ccf_url)
+    # url = 'http://{}:{}/{}'.format(capif_ip, capif_port, ccf_url)
+    url = 'https://{}/{}'.format(capif_ip, ccf_url)
 
     csr_request = create_csr("solicitud.csr")
 
@@ -104,6 +105,11 @@ def onboard_netapp_to_capif(capif_ip, capif_port, capif_callback_ip, capif_callb
         response = requests.request("POST", url, headers=headers, data=payload)
         response.raise_for_status()
         response_payload = json.loads(response.text)
+        print(response_payload['certificate'])
+        certification_file = open('netapp.crt', 'wb')
+        certification_file.write(bytes(response_payload['certificate'], 'utf-8'))
+        certification_file.close()
+
         return response_payload['apiInvokerId']
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
@@ -155,6 +161,10 @@ if __name__ == '__main__':
             netappID, capif_ca_crt, ccf_onboarding_url, ccf_discover_url = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description)
             r.set('netappID', netappID)
             r.set('capif_ca_crt', capif_ca_crt)
+            # csr_file = open('ca.crt', 'wb')
+            # csr_file.write(bytes(capif_ca_crt, 'utf-8'))
+            # csr_file.close()
+
             r.set('ccf_onboarding_url', ccf_onboarding_url)
             r.set('ccf_discover_url', ccf_discover_url)
             print("NetAppID: {}\n".format(netappID))
