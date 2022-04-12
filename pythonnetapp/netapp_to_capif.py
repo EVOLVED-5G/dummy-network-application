@@ -57,7 +57,7 @@ def register_netapp_to_capif(capif_ip, capif_port, username, password, role, des
         response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
         response_payload = json.loads(response.text)
-        return response_payload['id'],response_payload['capif_ca_crt'],response_payload['ccf_onboarding_url'],response_payload['ccf_discover_url'],
+        return response_payload['id'], response_payload['ccf_onboarding_url'], response_payload['ccf_discover_url'],
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
 
@@ -86,7 +86,7 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
 def onboard_netapp_to_capif(capif_ip, capif_port, capif_callback_ip, capif_callback_port, jwt_token, ccf_url):
     url = 'https://{}/{}'.format(capif_ip, ccf_url)
 
-    csr_request = create_csr("solicitud.csr")
+    csr_request = create_csr("cert_req.csr")
 
     json_file = open('invoker_details.json', 'rb')
     payload_dict = json.load(json_file)
@@ -118,12 +118,11 @@ def discover_service_apis(capif_ip, capif_port, api_invoker_id, jwt_token, ccf_u
     payload = {}
     files = {}
     headers = {
-        'Authorization': 'Bearer {}'.format(jwt_token),
         'Content-Type': 'application/json'
     }
 
     try:
-        response = requests.request("GET", url, headers=headers, data=payload, files=files)
+        response = requests.request("GET", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify='ca.crt')
         response.raise_for_status()
         response_payload = json.loads(response.text)
         return response_payload
@@ -156,9 +155,8 @@ if __name__ == '__main__':
 
     try:
         if not r.exists('netappID'):
-            netappID, capif_ca_crt, ccf_onboarding_url, ccf_discover_url = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description)
+            netappID, ccf_onboarding_url, ccf_discover_url = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description)
             r.set('netappID', netappID)
-            r.set('capif_ca_crt', capif_ca_crt)
             r.set('ccf_onboarding_url', ccf_onboarding_url)
             r.set('ccf_discover_url', ccf_discover_url)
             print("NetAppID: {}\n".format(netappID))
