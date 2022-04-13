@@ -5,6 +5,7 @@
 | Container             | Folder                | Description                                      |
 |-----------------------|-----------------------|--------------------------------------------------|
 | python_netapp         | pythonnetapp          | Python NetApp (communication example with CAPIF) |
+| python_apf            | pythonapf             | Python APF (communication example with CAPIF)    |
 | redis                 | -                     | DB to store info exchanged with CAPIF            |
 | web_netapp            | webnetapp             | HTML NetApp                                      |
 | nef_callback_server   | nef_callback_server   | Server implementing NEF callback endpoints       |
@@ -31,6 +32,19 @@ Otherwise, add the IP of their host (e.g. "192.168.X.X").
 ./cleanup_docker_containers.sh
 ```
 
+## Use Python APF
+Pre-condition: Deploy CAPIF stack
+```shell
+# Access Python NetApp
+./terminal_to_py_apf.sh
+
+# Inside the container
+python3 apf_to_capif.py
+
+# Outside container, for clean-up
+sudo rm ca.crt private.key cert_req.csr apf.crt
+```
+
 ## Use Python NetApp
 Pre-condition: Deploy CAPIF stack
 ```shell
@@ -38,7 +52,9 @@ Pre-condition: Deploy CAPIF stack
 ./terminal_to_py_netapp.sh
 
 # Inside the container
-python3 apf_to_capif.py
 python3 netapp_to_capif.py
 python3 netapp_to_nef.py
+
+# Outside container, for clean-up
+sudo rm ca.crt private.key cert_req.csr dummy.crt
 ```

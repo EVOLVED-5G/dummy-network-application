@@ -20,6 +20,23 @@ services:
       - redis
     extra_hosts:
       - host.docker.internal:host-gateway
+  python_apf:
+    image: python_apf
+    hostname: apf
+    container_name: python_apf
+    build:
+      context: ./pythonapf
+    volumes:
+      - ./pythonapf:/usr/src/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REQUESTS_CA_BUNDLE=/usr/src/app/ca.crt
+      - SSL_CERT_FILE=/usr/src/app/ca.crt
+    depends_on:
+      - redis
+    extra_hosts:
+      - host.docker.internal:host-gateway
   web_netapp:
     image: web_netapp
     container_name: web_netapp
