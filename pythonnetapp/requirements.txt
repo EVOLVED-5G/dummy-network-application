@@ -1,3 +1,4 @@
 requests
 configparser
 redis
+evolved5g
