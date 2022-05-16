@@ -24,7 +24,7 @@
 | Use of CAPIF SDK libraries          | -                      | ❌      |
 | Callback server for NEF responses   | -                      | ✅      |
 | Callback server for CAPIF responses | -                      | ✅      |
-| TLS Communication with CAPIF        | -                      | ❌      |
+| TLS Communication with CAPIF        | -                      | ✅      |
 | TLS Communication with NEF          | -                      | ❌      |
 
 
