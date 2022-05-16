@@ -58,7 +58,7 @@ Pre-condition: Deploy CAPIF stack
 python3 apf_to_capif.py
 
 # Outside container, for clean-up
-sudo rm ca.crt private.key cert_req.csr apf.crt
+ sudo rm ./pythonapf/ca.crt ./pythonapf/private.key ./pythonapf/cert_req.csr ./pythonapf/apf.crt
 ```
 
 ## Use Python NetApp
@@ -72,5 +72,5 @@ python3 netapp_to_capif.py
 python3 netapp_to_nef.py
 
 # Outside container, for clean-up
-sudo rm ca.crt private.key cert_req.csr dummy.crt
+sudo rm ./pythonnetapp/ca.crt ./pythonnetapp/private.key ./pythonnetapp/cert_req.csr ./pythonnetapp/dummy.crt
 ```
