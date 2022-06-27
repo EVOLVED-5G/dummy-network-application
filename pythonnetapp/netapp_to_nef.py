@@ -6,96 +6,95 @@ import os
 import datetime
 import re
 
+from evolved5g.sdk import LocationSubscriber, QosAwareness
+from evolved5g import swagger_client
+from evolved5g.swagger_client import LoginApi, UsageThreshold
+from evolved5g.swagger_client.models import Token
+import emulator_utils
+
 # Get environment variables
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
-def register_netapp_to_nef(nef_ip, nef_port):
-    access_token_url = "http://{}:{}/api/v1/login/access-token".format(nef_ip, nef_port)
-    access_payload = {
-        "username": "admin@my-email.com",
-        "password": "pass"
-    }
-    response = requests.request('POST', access_token_url, data=access_payload)
-    parsed = json.loads(response.text)
-    access_token = parsed['access_token']
-    return access_token
+def register_netapp_to_nef(nef_ip, nef_port) -> Token:
+
+    configuration = swagger_client.Configuration()
+    # The host of the 5G API (emulator)
+    configuration.host = "http://{}:{}".format(nef_ip, nef_port)
+    api_client = swagger_client.ApiClient(configuration=configuration)
+    api_client.select_header_content_type(["application/x-www-form-urlencoded"])
+    api = LoginApi(api_client)
+    nef_user = "admin@my-email.com"
+    nef_pass = "pass"
+    token = api.login_access_token_api_v1_login_access_token_post("", nef_user, nef_pass, "", "", "")
+
+    return token
 
 
-def monitor_subscription(nef_ip, nef_port, callback_ip, callback_port, times, access_token):
-    monitoringExpireTime = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+def monitor_subscription(times, access_token):
 
-    url = "http://{}:{}/api/v1/3gpp-monitoring-event/v1/myNetapp/subscriptions".format(nef_ip, nef_port)
-    payload = json.dumps({
-        "externalId": "10001@domain.com",
-        "notificationDestination": "http://{}:{}/nefcallbacks".format(callback_ip, callback_port),
-        "monitoringType": "LOCATION_REPORTING",
-        "maximumNumberOfReports": times,
-        "monitorExpireTime": monitoringExpireTime
-    })
+    expire_time = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    netapp_id = "myNetapp"
+    host = emulator_utils.get_host_of_the_nef_emulator()
+    location_subscriber = LocationSubscriber(host, access_token)
+    external_id = "10001@domain.com"
+    callback_host = emulator_utils.get_callback_server_for_nef_responses()
 
-    headers = {
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer " + access_token
-    }
+    subscription = location_subscriber.create_subscription(
+        netapp_id=netapp_id,
+        external_id=external_id,
+        notification_destination=callback_host,
+        maximum_number_of_reports=times,
+        monitor_expire_time=expire_time
+    )
+    monitoring_response = subscription.to_dict()
 
-    response = requests.request('POST', url, headers=headers, data=payload)
-    parsed = json.loads(response.text)
-
-    return parsed
+    return monitoring_response
 
 
-def sessionqos_subscription(nef_ip, nef_port, callback_ip, callback_port, access_token):
+def sessionqos_subscription(access_token):
 
-    url = "http://{}:{}/api/v1/3gpp-as-session-with-qos/v1/myNetApp/subscriptions".format(nef_ip, nef_port)
-    payload = json.dumps({
-        "ipv4Addr": "10.0.0.1",
-        "notificationDestination": "http://{}:{}/nefcallbacks".format(callback_ip, callback_port),
-        "snssai": {
-            "sst": 1,
-            "sd": "000001"
-          },
-          "dnn": "province1.mnc01.mcc202.gprs",
-          "qosReference": 82,
-          "altQoSReferences": [
-            0
-          ],
-          "usageThreshold": {
-            "duration": 0,
-            "totalVolume": 0,
-            "downlinkVolume": 0,
-            "uplinkVolume": 0
-          },
-          "qosMonInfo": {
-            "reqQosMonParams": [
-              "DOWNLINK"
-            ],
-            "repFreqs": [
-              "EVENT_TRIGGERED"
-            ],
-            "latThreshDl": 0,
-            "latThreshUl": 0,
-            "latThreshRp": 0,
-            "waitTime": 0,
-            "repPeriod": 0
-          }
-    })
+    netapp_id = "myNetapp"
+    host = emulator_utils.get_host_of_the_nef_emulator()
+    qos_awereness = QosAwareness(host, access_token)
+    equipment_network_identifier = "10.0.0.1"
+    network_identifier = QosAwareness.NetworkIdentifier.IP_V4_ADDRESS
+    conversational_voice = QosAwareness.GBRQosReference.CONVERSATIONAL_VOICE
+    # In this scenario we monitor UPLINK
+    uplink = QosAwareness.QosMonitoringParameter.UPLINK
+    # Minimum delay of data package during uplink, in milliseconds
+    uplink_threshold = 20
+    gigabyte = 1024 * 1024 * 1024
+    # Up to 10 gigabytes 5 GB downlink, 5gb uplink
+    usage_threshold = UsageThreshold(duration=None,  # not supported
+                                     total_volume=10 * gigabyte,  # 10 Gigabytes of total volume
+                                     downlink_volume=5 * gigabyte,  # 5 Gigabytes for downlink
+                                     uplink_volume=5 * gigabyte  # 5 Gigabytes for uplink
+                                     )
+    notification_destination = emulator_utils.get_callback_server_for_nef_responses()
 
-    headers = {
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer " + access_token
-    }
+    subscription = qos_awereness.create_guaranteed_bit_rate_subscription(
+        netapp_id=netapp_id,
+        equipment_network_identifier=equipment_network_identifier,
+        network_identifier=network_identifier,
+        notification_destination=notification_destination,
+        gbr_qos_reference=conversational_voice,
+        usage_threshold=usage_threshold,
+        qos_monitoring_parameter=uplink,
+        threshold=uplink_threshold,
+        wait_time_between_reports=10
+    )
 
-    response = requests.request('POST', url, headers=headers, data=payload)
-    parsed = json.loads(response.text)
+    qos_awereness_response = subscription.to_dict()
 
-    return parsed
+    return qos_awereness_response
 
 
-def qos_characteristics(nef_ip, nef_port, access_token):
+def qos_characteristics(access_token):
 
-    url = "http://{}:{}/api/v1/qosInfo/qosCharacteristics".format(nef_ip, nef_port)
+    host = emulator_utils.get_host_of_the_nef_emulator()
+    url = "{}/api/v1/qosInfo/qosCharacteristics".format(host)
 
     headers = {
         'Content-Type': 'application/json',
@@ -108,9 +107,10 @@ def qos_characteristics(nef_ip, nef_port, access_token):
     return parsed
 
 
-def qos_profiles(nef_ip, nef_port, access_token):
+def qos_profiles(access_token):
 
-    url = "http://{}:{}/api/v1/qosInfo/qosProfiles/AAAAA1".format(nef_ip, nef_port)
+    host = emulator_utils.get_host_of_the_nef_emulator()
+    url = "{}/api/v1/qosInfo/qosProfiles/AAAAA1".format(host)
 
     headers = {
         'Content-Type': 'application/json',
@@ -131,19 +131,11 @@ if __name__ == '__main__':
         decode_responses=True,
     )
 
-    config = configparser.ConfigParser()
-    config.read('credentials.properties')
-
-    nef_ip = config.get("credentials", "nef_ip")
-    nef_port = config.get("credentials", "nef_port")
-    callback_ip = config.get("credentials", "nef_callback_ip")
-    callback_port = config.get("credentials", "nef_callback_port")
-
     try:
         if not r.exists('nef_access_token'):
-            nef_access_token = register_netapp_to_nef(nef_ip, nef_port)
-            r.set('nef_access_token', nef_access_token)
-            print("NEF Token: {}\n".format(nef_access_token))
+            nef_access_token = emulator_utils.get_token()
+            r.set('nef_access_token', nef_access_token.access_token)
+            print("NEF Token: {}\n".format(nef_access_token.access_token))
     except Exception as e:
         status_code = e.args[1]
         print(e)
@@ -153,7 +145,7 @@ if __name__ == '__main__':
         ans = input("Do you want to test Monitoring Event API? (Y/n) ")
         if ans == "Y" or ans == 'y':
             times = input("Number of location monitoring callbacks: ")
-            last_response_from_nef = monitor_subscription(nef_ip, nef_port, callback_ip, callback_port, int(times), nef_access_token)
+            last_response_from_nef = monitor_subscription(int(times), nef_access_token)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
     except Exception as e:
@@ -164,28 +156,26 @@ if __name__ == '__main__':
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Session-with-QoS API? (Y/n) ")
         if ans == "Y" or ans == 'y':
-            last_response_from_nef = sessionqos_subscription(nef_ip, nef_port, callback_ip, callback_port, nef_access_token)
+            last_response_from_nef = sessionqos_subscription(nef_access_token)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
-            print("\nTo delete QoS subscription, execute the following command (inside the container):")
+            print("\n---- IMPORTANT ----")
+            print("To delete QoS subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
             sub_resource = last_response_from_nef['link']
             print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource, nef_access_token))
-            print("\nOr the following command (outside the container):")
-            sub_resource_a = re.sub(r'(host.docker.internal)', 'localhost', sub_resource)
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_a, nef_access_token))
+            print("\n-------------------\n")
     except Exception as e:
         status_code = e.args[1]
         print(e)
-
 
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test QoS Information APIs? (Y/n) ")
         if ans == "Y" or ans == 'y':
-            last_response_from_nef = qos_characteristics(nef_ip, nef_port, nef_access_token)
+            last_response_from_nef = qos_characteristics(nef_access_token)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
-            last_response_from_nef = qos_profiles(nef_ip, nef_port, nef_access_token)
+            last_response_from_nef = qos_profiles(nef_access_token)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
     except Exception as e:
