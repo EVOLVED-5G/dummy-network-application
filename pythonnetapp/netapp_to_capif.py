@@ -150,8 +150,13 @@ if __name__ == '__main__':
     role = config.get("credentials", "invoker_role")
     description = config.get("credentials", "invoker_description")
     cn = config.get("credentials", "invoker_cn")
-    capif_ip = config.get("credentials", "capif_ip")
-    capif_port = config.get("credentials", "capif_port")
+
+    # capif_ip = config.get("credentials", "capif_ip")
+    # capif_port = config.get("credentials", "capif_port")
+
+    capif_ip = os.getenv('CAPIF_HOSTNAME')
+    capif_port = os.getenv('CAPIF_PORT')
+
     capif_callback_ip = config.get("credentials", "capif_callback_ip")
     capif_callback_port = config.get("credentials", "capif_callback_port")
 

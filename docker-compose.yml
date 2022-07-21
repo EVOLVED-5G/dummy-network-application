@@ -16,23 +16,27 @@ services:
       - REDIS_PORT=6379
       - REQUESTS_CA_BUNDLE=/usr/src/app/ca.crt
       - SSL_CERT_FILE=/usr/src/app/ca.crt
+      - CAPIF_HOSTNAME=${CAPIF_HOSTNAME}
+      - CAPIF_PORT=8080
     depends_on:
       - redis
     extra_hosts:
       - host.docker.internal:host-gateway
-  python_apf:
-    image: python_apf
-    hostname: apf
-    container_name: python_apf
+  python_exposer:
+    image: python_exposer
+    hostname: exposer
+    container_name: python_exposer
     build:
-      context: ./pythonapf
+      context: ./pythonexposer
     volumes:
-      - ./pythonapf:/usr/src/app
+      - ./pythonexposer:/usr/src/app
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REQUESTS_CA_BUNDLE=/usr/src/app/ca.crt
       - SSL_CERT_FILE=/usr/src/app/ca.crt
+      - CAPIF_HOSTNAME=${CAPIF_HOSTNAME}
+      - CAPIF_PORT=8080
     depends_on:
       - redis
     extra_hosts:

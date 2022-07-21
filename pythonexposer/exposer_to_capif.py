@@ -21,7 +21,7 @@ def create_csr(csr_file_path):
 
     # Generate CSR
     req = X509Req()
-    req.get_subject().CN = 'apf'
+    req.get_subject().CN = 'exposer'
     req.get_subject().O = 'Telefonica I+D'
     req.get_subject().OU = 'Innovation'
     req.get_subject().L = 'Madrid'
@@ -40,7 +40,7 @@ def create_csr(csr_file_path):
     return csr_request
 
 
-def register_apf_to_capif(capif_ip, capif_port, username, password, role, description, cn):
+def register_exposer_to_capif(capif_ip, capif_port, username, password, role, description, cn):
     url = "http://{}:{}/register".format(capif_ip, capif_port)
 
     payload = dict()
@@ -93,14 +93,14 @@ def publish_service_api_to_capif(capif_ip, jwt_token, ccf_url):
     payload_dict = dict()
     payload_dict['csr'] = csr_request.decode("utf-8")
     payload_dict['mode'] = 'client'
-    payload_dict['filename'] = 'apf'
+    payload_dict['filename'] = 'exposer'
     payload = json.dumps(payload_dict)
 
     headers = {
         'Content-Type': 'application/json'
     }
 
-    certification_file = open('apf.crt', 'wb')
+    certification_file = open('exposer.crt', 'wb')
     try:
         response = requests.request("POST", url, headers=headers, data=payload)
         response.raise_for_status()
@@ -119,7 +119,7 @@ def publish_service_api_to_capif(capif_ip, jwt_token, ccf_url):
     }
 
     try:
-        response = requests.request("POST", url, headers=headers, data=payload, cert=('apf.crt', 'private.key'), verify='ca.crt')
+        response = requests.request("POST", url, headers=headers, data=payload, cert=('exposer.crt', 'private.key'), verify='ca.crt')
         response.raise_for_status()
         response_payload = json.loads(response.text)
         return response_payload['apiId']
@@ -140,20 +140,23 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('credentials.properties')
 
-    username = config.get("credentials", "apf_username")
-    password = config.get("credentials", "apf_password")
-    role = config.get("credentials", "apf_role")
-    description = config.get("credentials", "apf_description")
-    cn = config.get("credentials", "apf_cn")
-    capif_ip = config.get("credentials", "capif_ip")
-    capif_port = config.get("credentials", "capif_port")
+    username = config.get("credentials", "exposer_username")
+    password = config.get("credentials", "exposer_password")
+    role = config.get("credentials", "exposer_role")
+    description = config.get("credentials", "exposer_description")
+    cn = config.get("credentials", "exposer_cn")
+
+    # capif_ip = config.get("credentials", "capif_ip")
+    # capif_port = config.get("credentials", "capif_port")
+    capif_ip = os.getenv('CAPIF_HOSTNAME')
+    capif_port = os.getenv('CAPIF_PORT')
 
     try:
-        if not r.exists('apfID'):
-            apfID, ccf_publish_url = register_apf_to_capif(capif_ip, capif_port, username, password, role, description,cn)
-            r.set('apfID', apfID)
+        if not r.exists('exposerID'):
+            exposerID, ccf_publish_url = register_exposer_to_capif(capif_ip, capif_port, username, password, role, description,cn)
+            r.set('exposerID', exposerID)
             r.set('ccf_publish_url', ccf_publish_url)
-            print("APF ID: {}".format(apfID))
+            print("exposer ID: {}".format(exposerID))
     except Exception as e:
         status_code = e.args[1]
         if status_code == 409:
@@ -162,9 +165,9 @@ if __name__ == '__main__':
             print(e)
 
     try:
-        if not r.exists('capif_access_token_apf'):
+        if not r.exists('capif_access_token_exposer'):
             capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
-            r.set('capif_access_token_apf', capif_access_token)
+            r.set('capif_access_token_exposer', capif_access_token)
             print("Capif Token: {}".format(capif_access_token))
     except Exception as e:
         status_code = e.args[1]
@@ -175,10 +178,10 @@ if __name__ == '__main__':
         capif_access_token = None
 
     try:
-        if r.exists('apfID'):
-            # apfID = r.get('apfID')
+        if r.exists('exposerID'):
+            # exposerID = r.get('exposerID')
             ccf_publish_url = r.get('ccf_publish_url')
-            capif_access_token = r.get('capif_access_token_apf')
+            capif_access_token = r.get('capif_access_token_exposer')
             service_api_id = publish_service_api_to_capif(capif_ip, capif_access_token, ccf_publish_url)
             if not r.exists('services_num'):
                 services_num = 0
@@ -195,11 +198,11 @@ if __name__ == '__main__':
             message = e.args[0]
             if str(message).find("Token has expired") != -1:
                 capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
-                r.set('capif_access_token_apf', capif_access_token)
+                r.set('capif_access_token_exposer', capif_access_token)
                 print("New Capif Token: {}".format(capif_access_token))
                 print("Run the script again to publish a Service API")
-            elif str(message).find("APF not existing") != -1:
-                print("APF not existing. APF id not found")
+            elif str(message).find("Exposer not existing") != -1:
+                print("Exposer not existing. Exposer id not found")
             else:
                 print(e)
         elif status_code == 403:
