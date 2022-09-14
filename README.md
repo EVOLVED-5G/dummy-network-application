@@ -5,26 +5,27 @@
 | Container             | Folder                | Description                                      |
 |-----------------------|-----------------------|--------------------------------------------------|
 | python_netapp         | pythonnetapp          | Python NetApp (communication example with CAPIF) |
+| python_exposer            | pythonexposer             | Python exposer (communication example with CAPIF)    |
 | redis                 | -                     | DB to store info exchanged with CAPIF            |
 | web_netapp            | webnetapp             | HTML NetApp                                      |
 | nef_callback_server   | nef_callback_server   | Server implementing NEF callback endpoints       |
 | capif_callback_server | capif_callback_server | Server implementing CAPIF callback endpoints     |
 
 ## Development status
-| Development Task                    | Subtask                | Status |
-|-------------------------------------|------------------------|--------|
-| Communication with NEF (v. 1.4.0)   | Monitoring Event API   | ✅      |
-|                                     | Session With QoS API   | ✅      |
-| Communication with CAPIF            | Register (Invoker/APF) | ✅      |
-|                                     | Publish Service API    | ✅      |
-|                                     | Invoker Management API | ✅      |
-|                                     | Discover Service API   | ✅      |
-| Use of NEF SDK libraries            | -                      | ✅      |
-| Use of CAPIF SDK libraries          | -                      | ❌      |
-| Callback server for NEF responses   | -                      | ✅      |
-| Callback server for CAPIF responses | -                      | ✅      |
-| TLS Communication with CAPIF        | -                      | ❌      |
-| TLS Communication with NEF          | -                      | ❌      |
+| Development Task                    | Subtask                    | Status |
+|-------------------------------------|----------------------------|--------|
+| Communication with NEF (v. 1.4.0)   | Monitoring Event API       | ✅      |
+|                                     | Session With QoS API       | ✅      |
+| Communication with CAPIF            | Register (Invoker/Exposer) | ✅      |
+|                                     | Publish Service API        | ✅      |
+|                                     | Invoker Management API     | ✅      |
+|                                     | Discover Service API       | ✅      |
+| Use of NEF SDK libraries            | -                          | ✅      |
+| Use of CAPIF SDK libraries          | -                          | ❌      |
+| Callback server for NEF responses   | -                          | ✅      |
+| Callback server for CAPIF responses | -                          | ✅      |
+| TLS Communication with CAPIF        | -                          | ✅      |
+| TLS Communication with NEF          | -                          | ❌      |
 
 
 ## Container management
@@ -47,6 +48,19 @@ Otherwise, add the IP of their host (e.g. "192.168.X.X").
 ./cleanup_docker_containers.sh
 ```
 
+## Use Python Exposer
+Pre-condition: Deploy CAPIF stack
+```shell
+# Access Python NetApp
+./terminal_to_py_exposer.sh
+
+# Inside the container
+python3 exposer_to_capif.py
+
+# Outside container, for clean-up
+ sudo rm ./pythonexposer/ca.crt ./pythonexposer/private.key ./pythonexposer/cert_req.csr ./pythonexposer/exposer.crt
+```
+
 ## Use Python NetApp
 
 ```shell
@@ -54,7 +68,9 @@ Otherwise, add the IP of their host (e.g. "192.168.X.X").
 ./terminal_to_py_netapp.sh
 
 # Inside the container
-python3 apf_to_capif.py
 python3 netapp_to_capif.py
 python3 netapp_to_nef.py
+
+# Outside container, for clean-up
+sudo rm ./pythonnetapp/ca.crt ./pythonnetapp/private.key ./pythonnetapp/cert_req.csr ./pythonnetapp/dummy.crt
 ```

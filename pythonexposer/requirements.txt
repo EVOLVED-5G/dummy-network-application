@@ -2,4 +2,3 @@ requests
 configparser
 redis
 pyopenssl
-evolved5g
