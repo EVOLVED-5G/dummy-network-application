@@ -1,3 +1,4 @@
+from dis import dis
 import requests
 import json
 import configparser
@@ -41,6 +42,8 @@ def create_csr(csr_file_path):
 
 
 def register_netapp_to_capif(capif_ip, capif_port, username, password, role, description, cn):
+
+    print("Registering API Invoker to CAPIF")
     url = "http://{}:{}/register".format(capif_ip, capif_port)
 
     payload = dict()
@@ -55,16 +58,31 @@ def register_netapp_to_capif(capif_ip, capif_port, username, password, role, des
     }
 
     try:
+        print("''''''''''REQUEST'''''''''''''''''")
+        print("Request: to ",url) 
+        print("Request Headers: ",  headers) 
+        print("Request Body: ", json.dumps(payload))
+        print("''''''''''REQUEST'''''''''''''''''")
+
         response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
         response_payload = json.loads(response.text)
+        print("''''''''''RESPONSE'''''''''''''''''")
+        print("Response to: ",response.url) 
+        print("Response Headers: ",  response.headers) 
+        print("Response: ", response.json())
+        print("Response Status code: ", response.status_code)
+        print("Invoker registered successfuly")
+        print("''''''''''RESPONSE'''''''''''''''''")
         return response_payload['id'], response_payload['ccf_onboarding_url'], response_payload['ccf_discover_url'],
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
 
 
 def get_capif_token(capif_ip, capif_port, username, password, role):
-    url = "http://{}:{}/gettoken".format(capif_ip, capif_port)
+
+    print("Invoker Get CAPIF auth")
+    url = "http://{}:{}/getauth".format(capif_ip, capif_port)
 
     payload = dict()
     payload['username'] = username
@@ -76,15 +94,34 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
     }
 
     try:
+        print("''''''''''REQUEST'''''''''''''''''")
+        print("Request: to ",url) 
+        print("Request Headers: ",  headers) 
+        print("Request Body: ", json.dumps(payload))
+        print("''''''''''REQUEST'''''''''''''''''")
+
         response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
         response_payload = json.loads(response.text)
+
+        print("''''''''''RESPONSE'''''''''''''''''")
+        print("Response to: ",response.url) 
+        print("Response Headers: ",  response.headers) 
+        print("Response: ", response.json())
+        print("Response Status code: ", response.status_code)
+        print("Access Token obtained")
+        print("''''''''''RESPONSE'''''''''''''''''")
+    
+        ca_root_file = open('ca.crt', 'wb+')
+        ca_root_file.write(bytes(response_payload['ca_root'], 'utf-8'))
         return response_payload['access_token']
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
 
 
 def onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, jwt_token, ccf_url):
+
+    print("Onboarding netapp to CAPIF")
     url = 'https://{}/{}'.format(capif_ip, ccf_url)
 
     csr_request = create_csr("cert_req.csr")
@@ -102,36 +139,32 @@ def onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, jw
     }
 
     try:
-        response = requests.request("POST", url, headers=headers, data=payload)
+        print("''''''''''REQUEST'''''''''''''''''")
+        print("Request: to ",url) 
+        print("Request Headers: ",  headers) 
+        print("Request Body: ", json.dumps(payload))
+        print("''''''''''REQUEST'''''''''''''''''")
+
+        response = requests.request("POST", url, headers=headers, data=payload, verify='ca.crt')
         response.raise_for_status()
         response_payload = json.loads(response.text)
         certification_file = open('dummy.crt', 'wb')
         certification_file.write(bytes(response_payload['onboardingInformation']['apiInvokerCertificate'], 'utf-8'))
         certification_file.close()
+
+        print("''''''''''RESPONSE'''''''''''''''''")
+        print("Response to: ",response.url) 
+        print("Response Headers: ",  response.headers) 
+        print("Response: ", response.json())
+        print("Response Status code: ", response.status_code)
+        print("Success onboard invoker")
+        print("''''''''''RESPONSE'''''''''''''''''")
         return response_payload['apiInvokerId']
     except requests.exceptions.HTTPError as err:
         raise Exception(err.response.text, err.response.status_code)
 
 
-def discover_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
-    url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
 
-    payload = {}
-    files = {}
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    try:
-        response = requests.request("GET", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify='ca.crt')
-        response.raise_for_status()
-        response_payload = json.loads(response.text)
-        return response_payload
-    except requests.exceptions.HTTPError as err:
-        print(err.response.text)
-        message = json.loads(err.response.text)
-        status = err.response.status_code
-        raise Exception(message, status)
 
 
 if __name__ == '__main__':
@@ -168,19 +201,18 @@ if __name__ == '__main__':
             r.set('ccf_discover_url', ccf_discover_url)
             print("NetAppID: {}\n".format(netappID))
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         if status_code == 409:
             print("User already registed. Continue with token request\n")
         else:
             print(e)
 
     try:
-        if not r.exists('capif_access_token'):
-            capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
-            r.set('capif_access_token', capif_access_token)
-            print("Capif Token: {}\n".format(capif_access_token))
+        capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
+        r.set('capif_access_token', capif_access_token)
+        print("Capif Token: {}\n".format(capif_access_token))
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         if status_code == 401:
             print("Bad credentials. User not found\n")
         else:
@@ -195,13 +227,14 @@ if __name__ == '__main__':
             r.set('invokerID', invokerID)
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         if status_code == 401:
             capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             r.set('capif_access_token', capif_access_token)
             ccf_onboarding_url = r.get('ccf_onboarding_url')
             print("New Capif Token: {}\n".format(capif_access_token))
             invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
+            data_invoker = [{"invokerID": invokerID}]
             r.set('invokerID', invokerID)
             print("ApiInvokerID: {}\n".format(invokerID))
         elif status_code == 403:
@@ -210,19 +243,3 @@ if __name__ == '__main__':
         else:
             print(e)
 
-    try:
-        if r.exists('invokerID'):
-            invokerID = r.get('invokerID')
-            capif_access_token = r.get('capif_access_token')
-            ccf_discover_url = r.get('ccf_discover_url')
-            discovered_apis = discover_service_apis(capif_ip, invokerID, capif_access_token, ccf_discover_url)
-            print("Discovered APIs")
-            print(json.dumps(discovered_apis, indent=2))
-    except Exception as e:
-        status_code = e.args[1]
-        if status_code == 401:
-            print("API Invoker is not authorized")
-        elif status_code == 403:
-            print("API Invoker does not exist. API Invoker id not found")
-        else:
-            print(e)
