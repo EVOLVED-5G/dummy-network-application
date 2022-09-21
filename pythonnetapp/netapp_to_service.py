@@ -10,10 +10,10 @@ REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
-def demo_to_aef(capif_ip, api_invoker_id, ccf_url, jwt_token):
+def demo_to_aef(demo_ip, demo_port, demo_url, jwt_token):
 
     print("Using AEF Service API")
-    #url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
+    url = "https://{}:{}{}".format(demo_ip, demo_port, demo_url)
     url = "http://python_aef:8086/hello"
 
     payload = json.dumps({
@@ -85,7 +85,10 @@ if __name__ == '__main__':
             jwt_token = r.get('jwt_token')
             invokerID = r.get('invokerID')
             capif_access_token = r.get('capif_access_token')
-            result = demo_to_aef(capif_ip, invokerID, capif_access_token, jwt_token)
+            demo_ip = r.get('demo_ipv4_addr')
+            demo_port = r.get('demo_port')
+            demo_url = r.get('demo_url')
+            result = demo_to_aef(demo_ip, demo_port, demo_url, jwt_token)
             print("Success")
     except Exception as e:
         status_code = e.args[0]
