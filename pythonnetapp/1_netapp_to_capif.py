@@ -175,6 +175,10 @@ if __name__ == '__main__':
         decode_responses=True,
     )
 
+    #Remove data from Redis
+    keys = r.keys('*')
+    r.delete(*keys)
+
     config = configparser.ConfigParser()
     config.read('credentials.properties')
 
