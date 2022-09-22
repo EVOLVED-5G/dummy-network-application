@@ -9,11 +9,12 @@ import os
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
-def check_auth_to_aef(capif_ip, api_invoker_id, ccf_url):
+def check_auth_to_aef(capif_ip, capif_port):
     #url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
 
     print("Try to use AEF API")
-    url = "https://python_aef:8085/check-authentication"
+    #url = "https://python_aef:8085/check-authentication"
+    url = "https://{}:{}/check-authentication".format(capif_ip, capif_port)
 
     payload = {
         "apiInvokerId": "",
@@ -81,7 +82,9 @@ if __name__ == '__main__':
             invokerID = r.get('invokerID')
             capif_access_token = r.get('capif_access_token')
             ccf_discover_url = r.get('ccf_discover_url')
-            discovered_apis = check_auth_to_aef(capif_ip, invokerID, capif_access_token)
+            aef_ip_check = r.get("demo_ipv4_addr_check")
+            aef_port_check = r.get("demo_port_check")
+            discovered_apis = check_auth_to_aef(aef_ip_check, aef_port_check)
             r.set("jwt_token", discovered_apis["access_token"])
             print("Invoker Authrized to use AEF")
             print(json.dumps(discovered_apis, indent=2))

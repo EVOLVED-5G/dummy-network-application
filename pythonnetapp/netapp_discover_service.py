@@ -78,11 +78,15 @@ if __name__ == '__main__':
             print(json.dumps(discovered_apis, indent=2))
             getAEF_profiles = discovered_apis[0]["aef_profiles"][0]
             getAEF_interfaces = getAEF_profiles["interface_descriptions"][0]
+            getAEF_interfaces_check = getAEF_profiles["interface_descriptions"][1]
             getAEF_versions = getAEF_profiles["versions"][0]
             getAEF_resources = getAEF_versions["resources"][0]
             r.set('demo_ipv4_addr', getAEF_interfaces["ipv4_addr"])
             r.set('demo_port',  getAEF_interfaces["port"])
             r.set('demo_url', getAEF_resources['uri'])
+            r.set('demo_ipv4_addr_check', getAEF_interfaces_check["ipv4_addr"])
+            r.set('demo_port_check',  getAEF_interfaces_check["port"])
+
             print("Discovered APIs")
 
     except Exception as e:
