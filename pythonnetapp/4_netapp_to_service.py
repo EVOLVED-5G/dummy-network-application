@@ -13,7 +13,7 @@ REDIS_PORT = os.environ.get('REDIS_PORT')
 def demo_to_aef(demo_ip, demo_port, demo_url, jwt_token):
 
     print("Using AEF Service API")
-    url = "https://{}:{}{}".format(demo_ip, demo_port, demo_url)
+    url = "http://{}:{}{}".format(demo_ip, demo_port, demo_url)
     #url = "http://python_aef:8086/hello"
 
     payload = json.dumps({
