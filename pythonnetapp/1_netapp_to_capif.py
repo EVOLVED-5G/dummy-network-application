@@ -22,7 +22,7 @@ def create_csr(csr_file_path):
 
     # Generate CSR
     req = X509Req()
-    req.get_subject().CN = 'dummy'
+    req.get_subject().CN = config.get("credentials", "invoker_cn")
     req.get_subject().O = 'Telefonica I+D'
     req.get_subject().OU = 'Innovation'
     req.get_subject().L = 'Madrid'
