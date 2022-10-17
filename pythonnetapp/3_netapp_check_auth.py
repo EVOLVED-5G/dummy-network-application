@@ -14,8 +14,6 @@ def check_auth_to_aef(capif_ip):
 
     print(colored("Going to check auth to AEF","yellow"))
 
-    #url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
-
     #url = "https://python_aef:8085/check-authentication"
     url = "https://{}:443/check-authentication".format(capif_ip)
 
@@ -51,6 +49,7 @@ def check_auth_to_aef(capif_ip):
         message = json.loads(err.response.text)
         status = err.response.status_code
         raise Exception(message, status)
+
 
 if __name__ == '__main__':
 
