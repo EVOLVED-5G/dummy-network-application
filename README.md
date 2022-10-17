@@ -48,6 +48,19 @@ Otherwise, add the IP of their host (e.g. "192.168.X.X").
 ./cleanup_docker_containers.sh
 ```
 
+## Use Python Exposer
+Pre-condition: Deploy CAPIF stack
+```shell
+# Access Python NetApp
+./terminal_to_py_exposer.sh
+
+# Inside the container
+python3 exposer_to_capif.py
+
+# Outside container, for clean-up
+ sudo rm ./pythonexposer/ca.crt ./pythonexposer/private.key ./pythonexposer/cert_req.csr ./pythonexposer/exposer.crt
+```
+
 ## Use Python NetApp
 
 ```shell
