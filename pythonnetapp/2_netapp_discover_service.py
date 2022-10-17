@@ -9,10 +9,19 @@ from termcolor import colored
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
-def discover_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
+
+def discover_service_apis(capif_ip, api_invoker_id, ccf_url, path, crt):
 
     print(colored("Discover Service","yellow"))
     url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
+    print(url)
+
+    crt_path_file = path + crt
+    # print(crt_path_file)
+    prkey_path_file = path + "private.key"
+    # print(prkey_path_file)
+    ca_path_file = path + "ca.crt"
+    # print(ca_path_file)
 
     payload = {}
     files = {}
@@ -26,7 +35,7 @@ def discover_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
         print(colored(f"Request Headers: {headers}", "blue"))
         print(colored(f"''''''''''REQUEST'''''''''''''''''", "blue"))
 
-        response = requests.request("GET", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify='ca.crt')
+        response = requests.request("GET", url, headers=headers, data=payload, files=files, cert=(crt_path_file, prkey_path_file), verify=ca_path_file)
         response.raise_for_status()
         response_payload = json.loads(response.text)
         print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
@@ -52,30 +61,20 @@ if __name__ == '__main__':
         decode_responses=True,
     )
 
-    config = configparser.ConfigParser()
-    config.read('credentials.properties')
-
-    username = config.get("credentials", "invoker_username")
-    password = config.get("credentials", "invoker_password")
-    role = config.get("credentials", "invoker_role")
-    description = config.get("credentials", "invoker_description")
-    cn = config.get("credentials", "invoker_cn")
-
-    # capif_ip = config.get("credentials", "capif_ip")
-    # capif_port = config.get("credentials", "capif_port")
-
     capif_ip = os.getenv('CAPIF_HOSTNAME')
     capif_port = os.getenv('CAPIF_PORT')
 
-    capif_callback_ip = config.get("credentials", "capif_callback_ip")
-    capif_callback_port = config.get("credentials", "capif_callback_port")
+    f = open('./capif_onboarding/capif_api_details.json')
+    data = json.load(f)
 
     try:
-        if r.exists('invokerID'):
-            invokerID = r.get('invokerID')
-            capif_access_token = r.get('capif_access_token')
-            ccf_discover_url = r.get('ccf_discover_url')
-            discovered_apis = discover_service_apis(capif_ip, invokerID, capif_access_token, ccf_discover_url)
+        if data['api_invoker_id']:
+            invokerID = data['api_invoker_id']
+            ccf_discover_url = data['discover_services_url']
+            path_to_files = "./capif_onboarding/"
+            crt_file = data['csr_common_name'] + ".crt"
+
+            discovered_apis = discover_service_apis(capif_ip, invokerID, ccf_discover_url, path_to_files, crt_file)
             print(colored(json.dumps(discovered_apis, indent=2),"yellow"))
             getAEF_profiles = discovered_apis[0]["aef_profiles"][0]
             getAEF_interfaces = getAEF_profiles["interface_descriptions"][0]

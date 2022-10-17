@@ -2,4 +2,4 @@
 
 docker-compose down --rmi all --remove-orphans || true
 
-sudo rm ./pythonnetapp/*.crt ./pythonnetapp/*.key ./pythonnetapp/*.csr
+sudo rm ./pythonnetapp/capif_onboarding/*
