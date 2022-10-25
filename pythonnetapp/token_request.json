@@ -1,0 +1,6 @@
+{
+    "grant_type": "client_credentials",
+    "client_id": "29f1107e089f5a95ae57826d85f4ef",
+    "client_secret": "string",
+    "scope": "string"
+}

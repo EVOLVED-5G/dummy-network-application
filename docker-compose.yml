@@ -3,6 +3,8 @@ version: '3'
 services:
   redis:
     image: 'redis:latest'
+    networks:
+      - demo-network
   python_netapp:
     image: python_netapp
     networks:

@@ -3,3 +3,5 @@ configparser
 redis
 pyopenssl
 evolved5g
+pyjwt
+termcolor
