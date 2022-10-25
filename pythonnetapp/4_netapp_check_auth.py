@@ -1,48 +1,49 @@
+
 from dis import dis
 import requests
 import json
 import configparser
 import redis
 import os
+from termcolor import colored
 
 # Get environment variables
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
+def check_auth_to_aef(capif_ip):
 
-def demo_to_aef(demo_ip, demo_port, demo_url, jwt_token):
+    print(colored("Going to check auth to AEF","yellow"))
 
-    print("Using AEF Service API")
-    url = "http://{}:{}{}".format(demo_ip, demo_port, demo_url)
-    #url = "http://python_aef:8086/hello"
+    #url = "https://python_aef:8085/check-authentication"
+    url = "https://{}:443/check-authentication".format(capif_ip)
 
-    payload = json.dumps({
-        "name": "David"
-    })
+    payload = {
+        "apiInvokerId": "",
+        "supportedFeatures": ""
+
+    }
 
     files = {}
     headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer '+jwt_token
+        'Content-Type': 'application/json'
     }
 
     try:
-        print("''''''''''REQUEST'''''''''''''''''")
-        print("Request: to ",url) 
-        print("Request Headers: ",  headers) 
-        print("Request Body: ", json.dumps(payload))
-        print("''''''''''REQUEST'''''''''''''''''")
+        print(colored("''''''''''REQUEST'''''''''''''''''","blue"))
+        print(colored(f"Request: to {url}","blue"))
+        print(colored(f"Request Headers: {headers}", "blue"))
+        print(colored(f"''''''''''REQUEST'''''''''''''''''", "blue"))
         response = requests.request("POST", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify=False)
         response.raise_for_status()
         response_payload = json.loads(response.text)
-        print("''''''''''RESPONSE'''''''''''''''''")
-        print("Response to: ",response.url) 
-        print("Response Headers: ",  response.headers) 
-        print("Response: ", response.json())
-        print("Response Status code: ", response.status_code)
-        print("Success to invoke service")
-        print(response_payload)
-        print("''''''''''RESPONSE'''''''''''''''''")
+        print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
+        print(colored(f"Response to: {response.url}","green"))
+        print(colored(f"Response Headers: {response.headers}","green"))
+        print(colored(f"Response: {response.json()}","green"))
+        print(colored(f"Response Status code: {response.status_code}","green"))
+        print(colored("Success to obtain auth of AEF","green"))
+        print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
         return response_payload
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
@@ -77,19 +78,18 @@ if __name__ == '__main__':
     capif_callback_ip = config.get("credentials", "capif_callback_ip")
     capif_callback_port = config.get("credentials", "capif_callback_port")
 
-    try:
-        if r.exists('jwt_token'):
-            print("Going to check auth to AEF")
 
-            print("Doing test")
-            jwt_token = r.get('jwt_token')
+    try:
+        if r.exists('invokerID'):
             invokerID = r.get('invokerID')
             capif_access_token = r.get('capif_access_token')
+            ccf_discover_url = r.get('ccf_discover_url')
             demo_ip = r.get('demo_ipv4_addr')
-            demo_port = r.get('demo_port')
-            demo_url = r.get('demo_url')
-            result = demo_to_aef(demo_ip, demo_port, demo_url, jwt_token)
-            print("Success")
+            discovered_apis = check_auth_to_aef(demo_ip)
+            r.set("jwt_token", discovered_apis["access_token"])
+            print(colored("Invoker Authrized to use AEF","yellow"))
+            print(colored(json.dumps(discovered_apis, indent=2),"yellow"))
+
     except Exception as e:
         status_code = e.args[0]
         if status_code == 401:

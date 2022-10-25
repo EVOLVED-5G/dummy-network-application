@@ -4,14 +4,14 @@ import json
 import configparser
 import redis
 import os
-
+from termcolor import colored
 # Get environment variables
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 def discover_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
 
-    print("Discover Service")
+    print(colored("Discover Service","yellow"))
     url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
 
     payload = {}
@@ -21,20 +21,21 @@ def discover_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
     }
 
     try:
-        print("''''''''''REQUEST'''''''''''''''''")
-        print("Request: to ",url) 
-        print("Request Headers: ",  headers) 
-        print("''''''''''REQUEST'''''''''''''''''")
+        print(colored("''''''''''REQUEST'''''''''''''''''","blue"))
+        print(colored(f"Request: to {url}","blue"))
+        print(colored(f"Request Headers: {headers}", "blue"))
+        print(colored(f"''''''''''REQUEST'''''''''''''''''", "blue"))
 
         response = requests.request("GET", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify='ca.crt')
         response.raise_for_status()
         response_payload = json.loads(response.text)
-        print("''''''''''RESPONSE'''''''''''''''''")
-        print("Response to: ",response.url) 
-        print("Response Headers: ",  response.headers) 
-        print("Response: ", response.json())
-        print("Response Status code: ", response.status_code)
-        print("''''''''''RESPONSE'''''''''''''''''")
+        print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
+        print(colored(f"Response to: {response.url}","green"))
+        print(colored(f"Response Headers: {response.headers}","green"))
+        print(colored(f"Response: {response.json()}","green"))
+        print(colored(f"Response Status code: {response.status_code}","green"))
+        print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
+
         return response_payload
     except requests.exceptions.HTTPError as err:
         print(err.response.text)
@@ -75,19 +76,16 @@ if __name__ == '__main__':
             capif_access_token = r.get('capif_access_token')
             ccf_discover_url = r.get('ccf_discover_url')
             discovered_apis = discover_service_apis(capif_ip, invokerID, capif_access_token, ccf_discover_url)
-            print(json.dumps(discovered_apis, indent=2))
+            print(colored(json.dumps(discovered_apis, indent=2),"yellow"))
             getAEF_profiles = discovered_apis[0]["aef_profiles"][0]
             getAEF_interfaces = getAEF_profiles["interface_descriptions"][0]
-            getAEF_interfaces_check = getAEF_profiles["interface_descriptions"][1]
             getAEF_versions = getAEF_profiles["versions"][0]
             getAEF_resources = getAEF_versions["resources"][0]
             r.set('demo_ipv4_addr', getAEF_interfaces["ipv4_addr"])
             r.set('demo_port',  getAEF_interfaces["port"])
             r.set('demo_url', getAEF_resources['uri'])
-            r.set('demo_ipv4_addr_check', getAEF_interfaces_check["ipv4_addr"])
-            r.set('demo_port_check',  getAEF_interfaces_check["port"])
 
-            print("Discovered APIs")
+            print(colored("Discovered APIs","yellow"))
 
     except Exception as e:
         status_code = e.args[0]
