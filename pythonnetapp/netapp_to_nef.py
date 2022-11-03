@@ -18,7 +18,6 @@ REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
 def register_netapp_to_nef(nef_ip, nef_port) -> Token:
-
     configuration = swagger_client.Configuration()
     # The host of the 5G API (emulator)
     configuration.host = "http://{}:{}".format(nef_ip, nef_port)
@@ -32,12 +31,10 @@ def register_netapp_to_nef(nef_ip, nef_port) -> Token:
     return token
 
 
-def monitor_subscription(times, access_token):
-
+def monitor_subscription(times, host, access_token, certificate_folder, capifhost, capifport):
     expire_time = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
     netapp_id = "myNetapp"
-    host = emulator_utils.get_host_of_the_nef_emulator()
-    location_subscriber = LocationSubscriber(host, access_token)
+    location_subscriber = LocationSubscriber(host, access_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
     callback_host = emulator_utils.get_callback_server_for_nef_responses()
 
@@ -53,11 +50,9 @@ def monitor_subscription(times, access_token):
     return monitoring_response
 
 
-def sessionqos_subscription(access_token):
-
+def sessionqos_subscription(host, access_token, certificate_folder, capifhost, capifport):
     netapp_id = "myNetapp"
-    host = emulator_utils.get_host_of_the_nef_emulator()
-    qos_awereness = QosAwareness(host, access_token)
+    qos_awereness = QosAwareness(host, access_token, certificate_folder, capifhost, capifport)
     equipment_network_identifier = "10.0.0.1"
     network_identifier = QosAwareness.NetworkIdentifier.IP_V4_ADDRESS
     conversational_voice = QosAwareness.GBRQosReference.CONVERSATIONAL_VOICE
@@ -92,7 +87,6 @@ def sessionqos_subscription(access_token):
 
 
 def qos_characteristics(access_token):
-
     host = emulator_utils.get_host_of_the_nef_emulator()
     url = "{}/api/v1/qosInfo/qosCharacteristics".format(host)
 
@@ -108,7 +102,6 @@ def qos_characteristics(access_token):
 
 
 def qos_profiles(access_token):
-
     host = emulator_utils.get_host_of_the_nef_emulator()
     url = "{}/api/v1/qosInfo/qosProfiles/AAAAA1".format(host)
 
@@ -143,9 +136,17 @@ if __name__ == '__main__':
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Monitoring Event API? (Y/n) ")
+        nef_url = emulator_utils.get_host_of_the_nef_emulator()
+        folder_path_for_certificates_and_capif_api_key = "/usr/src/app/capif_onboarding"
+        capif_host = "capifcore"
+        capif_https_port = 443
         if ans == "Y" or ans == 'y':
             times = input("Number of location monitoring callbacks: ")
-            last_response_from_nef = monitor_subscription(int(times), nef_access_token)
+            last_response_from_nef = monitor_subscription(int(times),
+                                                          nef_url,
+                                                          nef_access_token,
+                                                          folder_path_for_certificates_and_capif_api_key,
+                                                          capif_host, capif_https_port)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
     except Exception as e:
@@ -155,12 +156,20 @@ if __name__ == '__main__':
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Session-with-QoS API? (Y/n) ")
+        nef_url = emulator_utils.get_url_of_the_nef_emulator()
+        folder_path_for_certificates_and_capif_api_key = "/usr/src/app/capif_onboarding"
+        capif_host = "capifcore"
+        capif_https_port = 443
         if ans == "Y" or ans == 'y':
-            last_response_from_nef = sessionqos_subscription(nef_access_token)
+            last_response_from_nef = sessionqos_subscription(nef_url,
+                                                             nef_access_token,
+                                                             folder_path_for_certificates_and_capif_api_key,
+                                                             capif_host, capif_https_port)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
             print("\n---- IMPORTANT ----")
-            print("To delete QoS subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
+            print(
+                "To delete QoS subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
             sub_resource = last_response_from_nef['link']
             print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource, nef_access_token))
             print("\n-------------------\n")
