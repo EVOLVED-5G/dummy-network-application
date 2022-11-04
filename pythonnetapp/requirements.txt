@@ -2,5 +2,5 @@ requests
 configparser
 redis
 pyopenssl
-evolved5g
 termcolor
+evolved5g

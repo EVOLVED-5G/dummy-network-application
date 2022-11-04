@@ -19,7 +19,7 @@
 |                                     | Discover Service API   | ✅      |
 | Communication with dummy_aef        | -                      | ✅      |
 | Use of NEF SDK libraries            | -                      | ✅      |
-| Use of CAPIF SDK libraries          | -                      | ❌      |
+| Use of CAPIF SDK libraries          | -                      | ✅      |
 | Callback server for NEF responses   | -                      | ✅      |
 | Callback server for CAPIF responses | -                      | ✅      |
 | TLS Communication with CAPIF        | -                      | ✅      |
@@ -48,19 +48,6 @@ Otherwise, add the IP of their host (e.g. "192.168.X.X").
 ./cleanup_docker_containers.sh
 ```
 
-## Use Python Exposer
-Pre-condition: Deploy CAPIF stack
-```shell
-# Access Python NetApp
-./terminal_to_py_exposer.sh
-
-# Inside the container
-python3 exposer_to_capif.py
-
-# Outside container, for clean-up
- sudo rm ./pythonexposer/ca.crt ./pythonexposer/private.key ./pythonexposer/cert_req.csr ./pythonexposer/exposer.crt
-```
-
 ## Use Python NetApp
 
 ```shell
@@ -69,12 +56,9 @@ python3 exposer_to_capif.py
 
 # Inside the container
 # Test NetApp with CAPIF and dummy_aef
-python3 1_netapp_to_capif.py
-python3 2_netapp_discover_service.py
+python3 1_netapp_to_nef.py
 python3 3_netapp_check_auth.py
 python3 4_netapp_to_service.py
-# Test NetApp with NEF Emulator
-python3 netapp_to_nef.py
 
 # Outside container, for clean-up
 sudo rm ./pythonnetapp/*.crt ./pythonnetapp/*.key ./pythonnetapp/*.csr
