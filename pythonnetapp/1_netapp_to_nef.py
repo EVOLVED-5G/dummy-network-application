@@ -6,7 +6,7 @@ import os
 import datetime
 import re
 
-from evolved5g.sdk import LocationSubscriber, QosAwareness
+from evolved5g.sdk import LocationSubscriber, QosAwareness, ConnectionMonitor
 from evolved5g.swagger_client import UsageThreshold, Configuration, ApiClient, LoginApi
 
 # Get environment variables
@@ -31,6 +31,25 @@ def monitor_subscription(times, host, access_token, certificate_folder, capifhos
 
     return monitoring_response
 
+
+def connection_monitoring(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+    expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
+    netapp_id = "myNetapp"
+    connection_monitor = ConnectionMonitor(host, access_token, certificate_folder, capifhost, capifport)
+    external_id = "10001@domain.com"
+
+    subscription_when_not_connected = connection_monitor.create_subscription(
+        netapp_id=netapp_id,
+        external_id=external_id,
+        notification_destination=callback_server,
+        monitoring_type=ConnectionMonitor.MonitoringType.INFORM_WHEN_CONNECTED,
+        wait_time_before_sending_notification_in_seconds=5,
+        maximum_number_of_reports=1000,
+        monitor_expire_time=expire_time
+    )
+    connection_monitoring_response = subscription_when_not_connected.to_dict()
+
+    return connection_monitoring_response
 
 def sessionqos_subscription(host, access_token, certificate_folder, capifhost, capifport, callback_server):
     netapp_id = "myNetapp"
@@ -75,17 +94,13 @@ if __name__ == '__main__':
         decode_responses=True,
     )
 
-    config = configparser.ConfigParser()
-    config.read('credentials.properties')
-    username = config.get("credentials", "nef_user")
-    password = config.get("credentials", "nef_pass")
-    nef_ip = config.get("credentials", "nef_ip")
-    nef_port = config.get("credentials", "nef_port")
-    nef_url = "http://{}:{}".format(nef_ip, nef_port)
-
-    callback_ip = config.get("credentials", "nef_callback_ip")
-    callback_port = config.get("credentials", "nef_callback_port")
-    nef_callback = "http://{}:{}/nefcallbacks".format(callback_ip, callback_port)
+    nef_url = "http://{}:{}".format(os.getenv('NEF_IP'), os.environ.get('NEF_PORT'))
+    nef_callback = "http://{}:{}/nefcallbacks".format(os.getenv('NEF_CALLBACK_IP'), os.environ.get('NEF_CALLBACK_PORT'))
+    nef_user = os.getenv('NEF_USER')
+    nef_pass = os.environ.get('NEF_PASS')
+    capif_host = os.getenv('CAPIF_HOSTNAME')
+    capif_https_port = os.environ.get('CAPIF_PORT_HTTPS')
+    folder_path_for_certificates_and_capif_api_key = os.environ.get('PATH_TO_CERTS')
 
     try:
         if not r.exists('nef_access_token'):
@@ -94,7 +109,7 @@ if __name__ == '__main__':
             api_client = ApiClient(configuration=configuration)
             api_client.select_header_content_type(["application/x-www-form-urlencoded"])
             api = LoginApi(api_client)
-            token = api.login_access_token_api_v1_login_access_token_post("", username, password, "", "", "")
+            token = api.login_access_token_api_v1_login_access_token_post("", nef_user, nef_pass, "", "", "")
             r.set('nef_access_token', token.access_token)
             print("NEF Token: {}\n".format(token.access_token))
     except Exception as e:
@@ -104,9 +119,6 @@ if __name__ == '__main__':
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Monitoring Event API? (Y/n) ")
-        folder_path_for_certificates_and_capif_api_key = "/usr/src/app/capif_onboarding"
-        capif_host = "capifcore"
-        capif_https_port = 443
         if ans == "Y" or ans == 'y':
             times = input("Number of location monitoring callbacks: ")
             last_response_from_nef = monitor_subscription(int(times),
@@ -122,10 +134,27 @@ if __name__ == '__main__':
 
     try:
         nef_access_token = r.get('nef_access_token')
+        ans = input("Do you want to test Connection Monitoring API? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            last_response_from_nef = connection_monitoring(nef_url,
+                                                          nef_access_token,
+                                                          folder_path_for_certificates_and_capif_api_key,
+                                                          capif_host, capif_https_port, nef_callback)
+            r.set('last_response_from_nef', str(last_response_from_nef))
+            print("{}\n".format(last_response_from_nef))
+            print("\n---- IMPORTANT ----")
+            print(
+                "To delete Connection monitoring subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
+            sub_resource = last_response_from_nef['link']
+            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource, nef_access_token))
+            print("\n-------------------\n")
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+    try:
+        nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Session-with-QoS API? (Y/n) ")
-        folder_path_for_certificates_and_capif_api_key = "/usr/src/app/capif_onboarding"
-        capif_host = "capifcore"
-        capif_https_port = 443
         if ans == "Y" or ans == 'y':
             last_response_from_nef = sessionqos_subscription(nef_url,
                                                              nef_access_token,
