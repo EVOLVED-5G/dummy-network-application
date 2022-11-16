@@ -10,13 +10,13 @@ REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
-def request_nef_token(nef_host):
+def request_nef_token(nef_host, username, password):
     configuration = Configuration()
     configuration.host = nef_host
     api_client = ApiClient(configuration=configuration)
     api_client.select_header_content_type(["application/x-www-form-urlencoded"])
     api = LoginApi(api_client)
-    token = api.login_access_token_api_v1_login_access_token_post("", nef_user, nef_pass, "", "", "")
+    token = api.login_access_token_api_v1_login_access_token_post("", username, password, "", "", "")
 
     return token
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     try:
         if not r.exists('nef_access_token'):
-            token = request_nef_token(nef_url)
+            token = request_nef_token(nef_url, nef_user, nef_pass)
             r.set('nef_access_token', token.access_token)
             print("NEF Token: {}\n".format(token.access_token))
     except Exception as e:
