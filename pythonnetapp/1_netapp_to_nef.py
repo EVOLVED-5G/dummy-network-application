@@ -14,6 +14,17 @@ REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
 
+def request_nef_token(nef_host):
+    configuration = Configuration()
+    configuration.host = nef_host
+    api_client = ApiClient(configuration=configuration)
+    api_client.select_header_content_type(["application/x-www-form-urlencoded"])
+    api = LoginApi(api_client)
+    token = api.login_access_token_api_v1_login_access_token_post("", nef_user, nef_pass, "", "", "")
+
+    return token
+
+
 def monitor_subscription(times, host, access_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
     netapp_id = "myNetapp"
@@ -104,12 +115,7 @@ if __name__ == '__main__':
 
     try:
         if not r.exists('nef_access_token'):
-            configuration = Configuration()
-            configuration.host = nef_url
-            api_client = ApiClient(configuration=configuration)
-            api_client.select_header_content_type(["application/x-www-form-urlencoded"])
-            api = LoginApi(api_client)
-            token = api.login_access_token_api_v1_login_access_token_post("", nef_user, nef_pass, "", "", "")
+            token = request_nef_token(nef_url)
             r.set('nef_access_token', token.access_token)
             print("NEF Token: {}\n".format(token.access_token))
     except Exception as e:
@@ -144,9 +150,10 @@ if __name__ == '__main__':
             print("{}\n".format(last_response_from_nef))
             print("\n---- IMPORTANT ----")
             print(
-                "To delete Connection monitoring subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
+                "To delete Connection monitoring subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
             sub_resource = last_response_from_nef['link']
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource, nef_access_token))
+            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
+            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
             print("\n-------------------\n")
     except Exception as e:
         status_code = e.args[1]
@@ -164,9 +171,10 @@ if __name__ == '__main__':
             print("{}\n".format(last_response_from_nef))
             print("\n---- IMPORTANT ----")
             print(
-                "To delete QoS subscription, execute the following command (from a host that can see NEF IP and 'curl' is installed):\n")
+                "To delete QoS subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
             sub_resource = last_response_from_nef['link']
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource, nef_access_token))
+            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
+            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
             print("\n-------------------\n")
     except Exception as e:
         status_code = e.args[1]

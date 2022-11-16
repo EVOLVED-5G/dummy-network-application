@@ -10,36 +10,53 @@
 | capif_callback_netapp | capif_callback_netapp | Server implementing CAPIF callback endpoints     |
 
 ## Development status
-| Development Task                    | Subtask                | Status |
-|-------------------------------------|------------------------|--------|
-| Communication with NEF (v. 1.4.0)   | Monitoring Event API   | ✅      |
-|                                     | Session With QoS API   | ✅      |
-| Communication with CAPIF            | Register               | ✅      |
-|                                     | Invoker Management API | ✅      |
-|                                     | Discover Service API   | ✅      |
-| Communication with dummy_aef        | -                      | ✅      |
-| Use of NEF SDK libraries            | -                      | ✅      |
-| Use of CAPIF SDK libraries          | -                      | ✅      |
-| Callback server for NEF responses   | -                      | ✅      |
-| Callback server for CAPIF responses | -                      | ✅      |
-| TLS Communication with CAPIF        | -                      | ✅      |
-| TLS Communication with NEF          | -                      | ❌      |
+| Development Task                    | Subtask                   | Status |
+|-------------------------------------|---------------------------|--------|
+| Communication with NEF (v. 1.4.0)   | Monitoring Event API      | ✅      |
+|                                     | Session With QoS API      | ✅      |
+|                                     | Connection Monitoring API | ✅      |
+| Communication with CAPIF            | Register                  | ✅      |
+|                                     | Invoker Management API    | ✅      |
+|                                     | Discover Service API      | ✅      |
+| Communication with dummy_aef        | -                         | ✅      |
+| Use of NEF SDK libraries            | -                         | ✅      |
+| Use of CAPIF SDK libraries          | -                         | ✅      |
+| Callback server for NEF responses   | -                         | ✅      |
+| Callback server for CAPIF responses | -                         | ✅      |
+| TLS Communication with CAPIF        | -                         | ✅      |
+| TLS Communication with NEF          | -                         | ❌      |
 
 
 ## Container management
 Pre-condition:
-- Deploy CAPIF, dummy_aef and NEF stack (locally or on another server)
-- Define IPs* and ports of CAPIF, NEF and callback server (in files credentails.properties)
+- Deploy CAPIF and NEF stack (locally or on another server)
 
-*If CAPIF and NEF are running on the same host as dummy_netapp,
-then leave the IP properties as "host.docker.internal". 
-Otherwise, add the IP of their host (e.g. "192.168.X.X"). 
+All configuration of the netapp is defined as environment variables 
+in docker-compose.yml
+
+If CAPIF and NEF are running on the same host as dummy_netapp,
+then leave the configuration as it is. 
+Otherwise, according to the architecture followed edit the variables:
+- NEF_IP (setting it as the IP / server name of the host that NEF is deployed)
+- NEF_CALLBACK_IP & CAPIF_CALLBACK_URL (setting them as the IP / server name of the host that dummy netapp is deployed)
 
 **For communication with dummy_aef, demo-network is created.
 
 ```shell
 # Deploy and run containers
 ./run.sh
+
+# Access Redis cli (to see NEF access token, responses and callbacks)
+./redis_cli.sh
+
+## Inside redis cli, execute the following command 
+## to see the redis variables where the info is stored
+keys *
+
+## Inside redis cli, execute the following command 
+## to see the content of a redis variable
+get *key*
+
 
 # Stop containers
 ./stop.sh
