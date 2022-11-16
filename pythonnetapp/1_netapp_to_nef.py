@@ -1,10 +1,6 @@
-import requests
-import json
-import configparser
 import redis
 import os
 import datetime
-import re
 
 from evolved5g.sdk import LocationSubscriber, QosAwareness, ConnectionMonitor
 from evolved5g.swagger_client import UsageThreshold, Configuration, ApiClient, LoginApi
