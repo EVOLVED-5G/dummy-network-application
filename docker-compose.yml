@@ -35,6 +35,7 @@ services:
       - redis_netapp
     extra_hosts:
       - host.docker.internal:host-gateway
+      - capifcore:host-gateway
   nef_callback_server:
      build:
        context: ./nef_callback_server
