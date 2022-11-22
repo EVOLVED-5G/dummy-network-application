@@ -9,11 +9,11 @@ from termcolor import colored
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 
-def events_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
 
+def events_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
     print(colored("Discover Service","yellow"))
     #url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
-    url = "https://capif.apps.ocp-epg.hi.inet/"+api_invoker_id+"/subscription"
+    url = "https://capif.apps.ocp-epg.hi.inet/capif-events/"+api_invoker_id+"/subscription"
 
     with open('events.json', "rb") as f:
         payload = json.load(f)
@@ -21,9 +21,6 @@ def events_service_apis(capif_ip, api_invoker_id, jwt_token, ccf_url):
     headers = {
         'Content-Type': 'application/json'
     }
-
-    
-
     try:
         print(colored("''''''''''REQUEST'''''''''''''''''","blue"))
         print(colored(f"Request: to {url}","blue"))
@@ -85,7 +82,6 @@ if __name__ == '__main__':
             # r.set('demo_ipv4_addr', getAEF_interfaces["ipv4_addr"])
             # r.set('demo_port',  getAEF_interfaces["port"])
             # r.set('demo_url', getAEF_resources['uri'])
-
             # print(colored("Discovered APIs","yellow"))
 
     except Exception as e:

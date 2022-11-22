@@ -1,21 +1,6 @@
 {
-    "securityInfo": [
-      {
-        "apiId": "string",
-        "aefId":"ec2b554166ca9c7b6c75250956f302",
-        "prefSecurityMethods": [
-          "PSK",
-          "Oauth"
-        ],
-        "authenticationInfo": "string",
-        "authorizationInfo": "string"
-      }
-    ],
-    "notificationDestination": "string",
-    "requestTestNotification": true,
-    "websockNotifConfig": {
-      "websocketUri": "string",
-      "requestWebsocketUri": true
-    },
-    "supportedFeatures": "fff"
-  }
+  "events": [
+    "SERVICE_API_AVAILABLE"
+  ],
+  "notificationDestination": "http://calback.apps.ocp-epg.hi.inet"
+}
