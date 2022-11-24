@@ -39,7 +39,7 @@ def monitor_subscription(times, host, access_token, certificate_folder, capifhos
     return monitoring_response
 
 
-def connection_monitoring(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+def connection_monitoring_ue_reachability(host, access_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
     netapp_id = "myNetapp"
     connection_monitor = ConnectionMonitor(host, access_token, certificate_folder, capifhost, capifport)
@@ -50,6 +50,26 @@ def connection_monitoring(host, access_token, certificate_folder, capifhost, cap
         external_id=external_id,
         notification_destination=callback_server,
         monitoring_type=ConnectionMonitor.MonitoringType.INFORM_WHEN_CONNECTED,
+        wait_time_before_sending_notification_in_seconds=5,
+        maximum_number_of_reports=1000,
+        monitor_expire_time=expire_time
+    )
+    connection_monitoring_response = subscription_when_not_connected.to_dict()
+
+    return connection_monitoring_response
+
+
+def connection_monitoring_loss_of_conn(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+    expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
+    netapp_id = "myNetapp"
+    connection_monitor = ConnectionMonitor(host, access_token, certificate_folder, capifhost, capifport)
+    external_id = "10001@domain.com"
+
+    subscription_when_not_connected = connection_monitor.create_subscription(
+        netapp_id=netapp_id,
+        external_id=external_id,
+        notification_destination=callback_server,
+        monitoring_type=ConnectionMonitor.MonitoringType.INFORM_WHEN_NOT_CONNECTED,
         wait_time_before_sending_notification_in_seconds=5,
         maximum_number_of_reports=1000,
         monitor_expire_time=expire_time
@@ -136,9 +156,30 @@ if __name__ == '__main__':
 
     try:
         nef_access_token = r.get('nef_access_token')
-        ans = input("Do you want to test Connection Monitoring API? (Y/n) ")
+        ans = input("Do you want to test Connection Monitoring API (LOSS_OF_CONNECTIVITY)? (Y/n) ")
         if ans == "Y" or ans == 'y':
-            last_response_from_nef = connection_monitoring(nef_url,
+            last_response_from_nef = connection_monitoring_loss_of_conn(nef_url,
+                                                          nef_access_token,
+                                                          folder_path_for_certificates_and_capif_api_key,
+                                                          capif_host, capif_https_port, nef_callback)
+            r.set('last_response_from_nef', str(last_response_from_nef))
+            print("{}\n".format(last_response_from_nef))
+            print("\n---- IMPORTANT ----")
+            print(
+                "To delete Connection monitoring subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
+            sub_resource = last_response_from_nef['link']
+            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
+            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
+            print("\n-------------------\n")
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+    try:
+        nef_access_token = r.get('nef_access_token')
+        ans = input("Do you want to test Connection Monitoring API (UE_REACHABILITY)? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            last_response_from_nef = connection_monitoring_ue_reachability(nef_url,
                                                           nef_access_token,
                                                           folder_path_for_certificates_and_capif_api_key,
                                                           capif_host, capif_https_port, nef_callback)
