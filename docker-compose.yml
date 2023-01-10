@@ -20,18 +20,18 @@ services:
       - CAPIF_PORT=8080
     extra_hosts:
       - host.docker.internal:host-gateway
-  capif_callback_server:
-    build:
-      context: ./capif_callback_server
-    ports:
-      - 8086:8080
-    volumes:
-      - ./capif_callback_server:/usr/src/app
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    extra_hosts:
-      - host.docker.internal:host-gateway
+  # capif_callback_server:
+  #   build:
+  #     context: ./capif_callback_server
+  #   ports:
+  #     - 8086:8080
+  #   volumes:
+  #     - ./capif_callback_server:/usr/src/app
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #   extra_hosts:
+  #     - host.docker.internal:host-gateway
 
 networks:
   demo-network:

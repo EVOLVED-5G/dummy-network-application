@@ -6,9 +6,6 @@ import redis
 import os
 from termcolor import colored
 
-# Get environment variables
-REDIS_HOST = os.getenv('REDIS_HOST')
-REDIS_PORT = os.environ.get('REDIS_PORT')
 
 from OpenSSL.SSL import FILETYPE_PEM
 from OpenSSL.crypto import (dump_certificate_request, dump_privatekey, load_publickey, PKey, TYPE_RSA, X509Req, dump_publickey)
@@ -170,17 +167,6 @@ def onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, jw
 
 if __name__ == '__main__':
 
-    r = redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        decode_responses=True,
-    )
-
-    #Remove data from Redis
-    keys = r.keys('*')
-    if len(keys) != 0:
-        r.delete(*keys)
-
 
     config = configparser.ConfigParser()
     config.read('credentials.properties')
@@ -200,12 +186,17 @@ if __name__ == '__main__':
     capif_callback_ip = config.get("credentials", "capif_callback_ip")
     capif_callback_port = config.get("credentials", "capif_callback_port")
 
+    if os.path.exists("demo_values.json"):
+        os.remove("demo_values.json")
+
+    demo_values = {}
+
     try:
-        if not r.exists('netappID'):
+        if 'netappID' not in demo_values:
             netappID, ccf_onboarding_url, ccf_discover_url = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description, cn)
-            r.set('netappID', netappID)
-            r.set('ccf_onboarding_url', ccf_onboarding_url)
-            r.set('ccf_discover_url', ccf_discover_url)
+            demo_values['netappID'] = netappID
+            demo_values['ccf_onboarding_url'] = ccf_onboarding_url
+            demo_values['ccf_discover_url'] = ccf_discover_url
             print(colored(f"NetAppID: {netappID}\n","yellow"))
     except Exception as e:
         status_code = e.args[0]
@@ -215,9 +206,10 @@ if __name__ == '__main__':
             print(e)
 
     try:
-        capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
-        r.set('capif_access_token', capif_access_token)
-        print(colored(f"Capif Token: {capif_access_token}\n","yellow"))
+        if 'capif_access_token' not in demo_values and 'netappID' in demo_values:
+            capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
+            demo_values['capif_access_token'] = capif_access_token
+            print(colored(f"Capif Token: {capif_access_token}\n","yellow"))
     except Exception as e:
         status_code = e.args[0]
         if status_code == 401:
@@ -227,25 +219,28 @@ if __name__ == '__main__':
         capif_access_token = None
 
     try:
-        if not r.exists('invokerID'):
-            capif_access_token = r.get('capif_access_token')
-            ccf_onboarding_url = r.get('ccf_onboarding_url')
-            invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
-            r.set('invokerID', invokerID)
+        if 'invokerID' not in demo_values:
+            capif_access_token = demo_values['capif_access_token']
+            ccf_onboarding_url = demo_values['ccf_onboarding_url']
+            invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, demo_values['capif_access_token'], ccf_onboarding_url)
+            demo_values['invokerID'] = invokerID
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:
         status_code = e.args[0]
         if status_code == 401:
             capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
-            r.set('capif_access_token', capif_access_token)
+            demo_values['capif_access_token'] = capif_access_token
             ccf_onboarding_url = r.get('ccf_onboarding_url')
             print("New Capif Token: {}\n".format(capif_access_token))
             invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
             data_invoker = [{"invokerID": invokerID}]
-            r.set('invokerID', invokerID)
+            demo_values['invokerID'] = invokerID
             print(colored(f"ApiInvokerID: {invokerID}\n","yellow"))
         elif status_code == 403:
             print("Invoker already registered.")
             print("Chanage invoker public key in invoker_details.json\n")
         else:
             print(e)
+
+    with open('demo_values.json', 'a') as outfile:
+        json.dump(demo_values, outfile)
