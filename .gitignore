@@ -9,3 +9,5 @@ __pycache__/
 *.key
 *.csr
 *.crt
+pythonnetapp/capif_onboarding/*
+!pythonnetapp/capif_onboarding/.gitkeep
