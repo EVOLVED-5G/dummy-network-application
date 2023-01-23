@@ -2,5 +2,9 @@
 
 docker-compose down --rmi all --remove-orphans || true
 
-#cd pythonnetapp && sudo rm ca.crt private.key cert_req.csr dummy.crt && cd ..
-#cd pythonexposer && sudo rm ca.crt private.key cert_req.csr exposer.crt && cd ..
+# sudo rm ./pythonnetapp/ca.crt && sudo rm ./pythonnetapp/cert_req.csr && sudo rm ./pythonnetapp/dummy.crt && sudo rm ./pythonnetapp/private.key && sudo rm ./pythonnetapp/ca_service.crt
+
+# sudo rm ./pythonnetapp/ca.crt
+# sudo rm ./pythonnetapp/cert_req.csr
+# sudo rm ./pythonnetapp/dummy.crt
+# sudo rm ./pythonnetapp/private.key

@@ -8,10 +8,13 @@ from termcolor import colored
 # Get environment variables
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
-def events_service_apis(capif_ip, api_invoker_id):
+
+
+def events_service_apis(capif_addr, api_invoker_id):
     print(colored("Discover Service","yellow"))
-    #url = "https://{}/{}{}".format(capif_ip, ccf_url, api_invoker_id)
-    url = "https://capif.apps.ocp-epg.hi.inet/capif-events/v1/"+api_invoker_id+"/subscriptions"
+    #url = "https://{}/{}{}".format(capif_addr, ccf_url, api_invoker_id)
+    # url = "https://capif.apps.ocp-epg.hi.inet/capif-events/v1/"+api_invoker_id+"/subscriptions"
+    url = "https://"+capif_addr+"/capif-events/v1/"+api_invoker_id+"/subscriptions"
     with open('events.json', "rb") as f:
         payload = json.load(f)
     files = {}
@@ -39,17 +42,16 @@ def events_service_apis(capif_ip, api_invoker_id):
         status = err.response.status_code
         raise Exception(message, status)
 
+
 if __name__ == '__main__':
-    r = redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        decode_responses=True,
-    )
+    # r = redis.Redis(
+    #     host=REDIS_HOST,
+    #     port=REDIS_PORT,
+    #     decode_responses=True,
+    # )
 
-    if os.path.exists("demo_values.json"):
-        os.remove("demo_values.json")
-
-    demo_values = {}
+    with open('demo_values.json', 'r') as demo_file:
+        demo_values = json.load(demo_file)
 
     config = configparser.ConfigParser()
     config.read('credentials.properties')
@@ -65,9 +67,9 @@ if __name__ == '__main__':
     try:
         if 'invokerID' in demo_values:
             invokerID = demo_values['invokerID']
-            capif_access_token = r.get('capif_access_token')
-            ccf_discover_url = r.get('ccf_discover_url')
-            discovered_apis = events_service_apis(capif_ip, invokerID, capif_access_token, ccf_discover_url)
+            # capif_access_token = r.get('capif_access_token')
+            # ccf_discover_url = r.get('ccf_discover_url')
+            discovered_apis = events_service_apis(capif_ip, invokerID)
     except Exception as e:
         status_code = e.args[0]
         if status_code == 401:

@@ -13,7 +13,7 @@ def check_auth_to_aef(capif_ip, invokerId):
     print(colored("Going to check auth to AEF","yellow"))
 
     #url = "https://python_aef:8085/check-authentication"
-    url = "https://{}:8086/check-authentication".format(capif_ip)
+    url = "https://{}:8087/check-authentication".format(capif_ip)
 
     payload = {
         "apiInvokerId": invokerId,
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             discovered_apis = check_auth_to_aef(demo_ip, invokerID)
             demo_values["ca_service"] = discovered_apis["ca_service"]
             #r.set("jwt_token", discovered_apis["access_token"])
-            print(colored("Invoker Authrized to use AEF","yellow"))
+            print(colored("Invoker Authorized to use AEF","yellow"))
             print(colored(json.dumps(discovered_apis, indent=2),"yellow"))
 
     except Exception as e:

@@ -163,6 +163,10 @@ if __name__ == '__main__':
     capif_callback_ip = config.get("credentials", "capif_callback_ip")
     capif_callback_port = config.get("credentials", "capif_callback_port")
 
+    invokerID = ""
+    capif_access_token = ""
+    ccf_discover_url = ""
+
     try:
         if 'invokerID' in demo_values:
 
