@@ -1,7 +1,7 @@
-requests >= 2.28.1
+requests == 2.26.0
+evolved5g >= 0.8.9
 configparser
 redis
 pyopenssl
-evolved5g
 pyjwt
 termcolor

@@ -2,5 +2,5 @@
     "events": [
       "SERVICE_API_AVAILABLE"
     ],
-    "notificationDestination": "http://calback.apps.ocp-epg.hi.inet/capifcallbacks"
+    "notificationDestination": "http://192.168.1.11:8080/capifcallbacks"
   }

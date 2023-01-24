@@ -23,7 +23,7 @@ services:
       - REQUESTS_CA_BUNDLE=/usr/src/app/ca.crt
       - SSL_CERT_FILE=/usr/src/app/ca.crt
       - CAPIF_HOSTNAME=capifcore
-      - CAPIF_PORT_HTTP=8080
+      - CAPIF_PORT=8080
       - CAPIF_PORT_HTTPS=443
       - CAPIF_CALLBACK_URL=host.docker.internal
       - CAPIF_CALLBACK_PORT=8086
