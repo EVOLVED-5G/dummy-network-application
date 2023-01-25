@@ -86,9 +86,13 @@ if __name__ == '__main__':
             invokerID = data['api_invoker_id']
             # capif_access_token = r.get('capif_access_token')
 
-            demo_ip = r.get('demo_ipv4_addr')
-            demo_port = r.get('demo_port')
-            demo_url = r.get('demo_url')
+            # demo_ip = r.get('demo_ipv4_addr')
+            # demo_port = r.get('demo_port')
+            # demo_url = r.get('demo_url')
+
+            demo_ip = "python_aef"
+            demo_port = 8086
+            demo_url = "/hello"
 
             path_to_files = "./capif_onboarding/"
             crt_file = data['csr_common_name'] + ".crt"

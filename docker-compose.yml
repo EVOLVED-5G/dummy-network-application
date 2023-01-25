@@ -13,9 +13,9 @@ services:
     hostname: dummy
     container_name: python_netapp
     build:
-      context: ./pythonnetapp
+      context: ./src/pythonnetapp
     volumes:
-      - ./pythonnetapp:/usr/src/app
+      - ./src/pythonnetapp:/usr/src/app
     environment:
       - REDIS_HOST=redis_netapp
       - REDIS_PORT=6379
@@ -38,13 +38,13 @@ services:
       - capifcore:host-gateway
   nef_callback_server:
      build:
-       context: ./nef_callback_server
+       context: ./src/nef_callback_server
      networks:
        - demo-network
      ports:
        - 8085:8080
      volumes:
-       - ./nef_callback_server:/usr/src/app
+       - ./src/nef_callback_server:/usr/src/app
      environment:
        - REDIS_HOST=redis_netapp
        - REDIS_PORT=6379
@@ -54,13 +54,13 @@ services:
        - host.docker.internal:host-gateway
   capif_callback_netapp:
      build:
-       context: ./capif_callback_netapp
+       context: ./src/capif_callback_netapp
      networks:
        - demo-network
      ports:
        - 8086:8080
      volumes:
-       - ./capif_callback_netapp:/usr/src/app
+       - ./src/capif_callback_netapp:/usr/src/app
      environment:
        - REDIS_HOST=redis_netapp
        - REDIS_PORT=6379

@@ -80,7 +80,8 @@ if __name__ == '__main__':
             path_to_files = "./capif_onboarding/"
             crt_file = data['csr_common_name'] + ".crt"
 
-            demo_ip = r.get('demo_ipv4_addr')
+            # demo_ip = r.get('demo_ipv4_addr')
+            demo_ip = "python_aef" # hostname of dummy_aef
             discovered_apis = check_auth_to_aef(demo_ip, path_to_files, crt_file)
             r.set("jwt_token", discovered_apis["access_token"])
             print(colored("Invoker Authrized to use AEF","yellow"))
