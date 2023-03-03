@@ -2,7 +2,7 @@
     "securityInfo": [
       {
         "prefSecurityMethods": [
-          "PKI"
+          "PSK"
         ],
         "authenticationInfo": "string",
         "authorizationInfo": "string"

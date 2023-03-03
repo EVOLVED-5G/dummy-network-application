@@ -140,6 +140,7 @@ def get_security_token(capif_ip, api_invoker_id, jwt_token, ccf_url, aef_id, api
         status = err.response.status_code
         raise Exception(message, status)
 
+
 if __name__ == '__main__':
 
     with open('demo_values.json', 'r') as demo_file:
@@ -176,8 +177,6 @@ if __name__ == '__main__':
             security_information = register_security_service(capif_ip, invokerID, capif_access_token, ccf_discover_url, demo_values)
             print(colored(json.dumps(security_information, indent=2),"yellow"))
             print(colored("Register Security context","yellow"))
-
-
     except Exception as e:
         status_code = e.args[0]
         if status_code == 401:

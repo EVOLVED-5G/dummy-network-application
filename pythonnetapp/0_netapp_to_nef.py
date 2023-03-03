@@ -4,6 +4,7 @@ import datetime
 
 from evolved5g.sdk import LocationSubscriber, QosAwareness, ConnectionMonitor
 from evolved5g.swagger_client import UsageThreshold, Configuration, ApiClient, LoginApi
+from evolved5g.swagger_client.rest import ApiException
 
 # Get environment variables
 REDIS_HOST = os.getenv('REDIS_HOST')
@@ -13,6 +14,7 @@ REDIS_PORT = os.environ.get('REDIS_PORT')
 def request_nef_token(nef_host, username, password):
     configuration = Configuration()
     configuration.host = nef_host
+    configuration.verify_ssl = False
     api_client = ApiClient(configuration=configuration)
     api_client.select_header_content_type(["application/x-www-form-urlencoded"])
     api = LoginApi(api_client)
@@ -21,17 +23,59 @@ def request_nef_token(nef_host, username, password):
     return token
 
 
-def monitor_subscription(times, host, access_token, certificate_folder, capifhost, capifport, callback_server):
+def read_and_delete_all_existing_qos_subscriptions(host, nef_token, certificate_folder, capifhost, capifport):
+    # How to get all subscriptions
+    netapp_id = "myNetapp"
+    qos_awareness = QosAwareness(host, nef_token, certificate_folder, capifhost, capifport)
+
+    try:
+        all_subscriptions = qos_awareness.get_all_subscriptions(netapp_id)
+        print(all_subscriptions)
+
+        for subscription in all_subscriptions:
+            id = subscription.link.split("/")[-1]
+            print("Deleting subscription with id: " + id)
+            qos_awareness.delete_subscription(netapp_id, id)
+    except ApiException as ex:
+        if ex.status == 404:
+            print("No active transcriptions found")
+        else: #something else happened, re-throw the exception
+            raise
+
+
+def read_and_delete_all_existing_location_subscriptions(host, nef_token, certificate_folder, capifhost, capifport):
+    # How to get all subscriptions
+    netapp_id = "myNetapp"
+    location_subscriber = LocationSubscriber(host, nef_token, certificate_folder, capifhost, capifport)
+
+    try:
+        all_subscriptions = location_subscriber.get_all_subscriptions(netapp_id, 0, 100)
+
+        print(all_subscriptions)
+
+        for subscription in all_subscriptions:
+            id = subscription.link.split("/")[-1]
+            print("Deleting subscription with id: " + id)
+            location_subscriber.delete_subscription(netapp_id, id)
+    except ApiException as ex:
+        if ex.status == 404:
+            print("No active transcriptions found")
+        else: #something else happened, re-throw the exception
+            raise
+
+
+def monitor_subscription(num_of_reports, host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
     netapp_id = "myNetapp"
-    location_subscriber = LocationSubscriber(host, access_token, certificate_folder, capifhost, capifport)
+    location_subscriber = LocationSubscriber(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
+    print(nef_token)
 
     subscription = location_subscriber.create_subscription(
         netapp_id=netapp_id,
         external_id=external_id,
         notification_destination=callback_server,
-        maximum_number_of_reports=times,
+        maximum_number_of_reports=num_of_reports,
         monitor_expire_time=expire_time
     )
     monitoring_response = subscription.to_dict()
@@ -39,10 +83,10 @@ def monitor_subscription(times, host, access_token, certificate_folder, capifhos
     return monitoring_response
 
 
-def connection_monitoring_ue_reachability(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+def connection_monitoring_ue_reachability(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
     netapp_id = "myNetapp"
-    connection_monitor = ConnectionMonitor(host, access_token, certificate_folder, capifhost, capifport)
+    connection_monitor = ConnectionMonitor(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
 
     subscription_when_not_connected = connection_monitor.create_subscription(
@@ -59,10 +103,10 @@ def connection_monitoring_ue_reachability(host, access_token, certificate_folder
     return connection_monitoring_response
 
 
-def connection_monitoring_loss_of_conn(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+def connection_monitoring_loss_of_conn(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
     netapp_id = "myNetapp"
-    connection_monitor = ConnectionMonitor(host, access_token, certificate_folder, capifhost, capifport)
+    connection_monitor = ConnectionMonitor(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
 
     subscription_when_not_connected = connection_monitor.create_subscription(
@@ -78,9 +122,10 @@ def connection_monitoring_loss_of_conn(host, access_token, certificate_folder, c
 
     return connection_monitoring_response
 
-def sessionqos_subscription(host, access_token, certificate_folder, capifhost, capifport, callback_server):
+
+def sessionqos_subscription(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     netapp_id = "myNetapp"
-    qos_awereness = QosAwareness(host, access_token, certificate_folder, capifhost, capifport)
+    qos_awereness = QosAwareness(host, nef_token, certificate_folder, capifhost, capifport)
     equipment_network_identifier = "10.0.0.1"
     network_identifier = QosAwareness.NetworkIdentifier.IP_V4_ADDRESS
     conversational_voice = QosAwareness.GBRQosReference.CONVERSATIONAL_VOICE
@@ -121,7 +166,7 @@ if __name__ == '__main__':
         decode_responses=True,
     )
 
-    nef_url = "http://{}:{}".format(os.getenv('NEF_IP'), os.environ.get('NEF_PORT'))
+    nef_url = "https://{}:{}".format(os.getenv('NEF_IP'), os.environ.get('NEF_PORT'))
     nef_callback = "http://{}:{}/nefcallbacks".format(os.getenv('NEF_CALLBACK_IP'), os.environ.get('NEF_CALLBACK_PORT'))
     nef_user = os.getenv('NEF_USER')
     nef_pass = os.environ.get('NEF_PASS')
@@ -129,6 +174,7 @@ if __name__ == '__main__':
     capif_https_port = os.environ.get('CAPIF_PORT_HTTPS')
     folder_path_for_certificates_and_capif_api_key = os.environ.get('PATH_TO_CERTS')
 
+    # Get NEF-created token
     try:
         if not r.exists('nef_access_token'):
             token = request_nef_token(nef_url, nef_user, nef_pass)
@@ -138,6 +184,7 @@ if __name__ == '__main__':
         status_code = e.args[1]
         print(e)
 
+    # Create a Location Reporting subscription
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Monitoring Event API? (Y/n) ")
@@ -154,48 +201,42 @@ if __name__ == '__main__':
         status_code = e.args[1]
         print(e)
 
+    # Create a Loss of Connectivity subscription
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Connection Monitoring API (LOSS_OF_CONNECTIVITY)? (Y/n) ")
         if ans == "Y" or ans == 'y':
             last_response_from_nef = connection_monitoring_loss_of_conn(nef_url,
-                                                          nef_access_token,
-                                                          folder_path_for_certificates_and_capif_api_key,
-                                                          capif_host, capif_https_port, nef_callback)
+                                                                        nef_access_token,
+                                                                        folder_path_for_certificates_and_capif_api_key,
+                                                                        capif_host,
+                                                                        capif_https_port,
+                                                                        nef_callback)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
-            print("\n---- IMPORTANT ----")
-            print(
-                "To delete Connection monitoring subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
-            sub_resource = last_response_from_nef['link']
-            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
-            print("\n-------------------\n")
+
     except Exception as e:
         status_code = e.args[1]
         print(e)
 
+    # Create a UE Reachability subscription
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Connection Monitoring API (UE_REACHABILITY)? (Y/n) ")
         if ans == "Y" or ans == 'y':
             last_response_from_nef = connection_monitoring_ue_reachability(nef_url,
-                                                          nef_access_token,
-                                                          folder_path_for_certificates_and_capif_api_key,
-                                                          capif_host, capif_https_port, nef_callback)
+                                                                           nef_access_token,
+                                                                           folder_path_for_certificates_and_capif_api_key,
+                                                                           capif_host,
+                                                                           capif_https_port,
+                                                                           nef_callback)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
-            print("\n---- IMPORTANT ----")
-            print(
-                "To delete Connection monitoring subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
-            sub_resource = last_response_from_nef['link']
-            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
-            print("\n-------------------\n")
     except Exception as e:
         status_code = e.args[1]
         print(e)
 
+    # Create a QoS subscription
     try:
         nef_access_token = r.get('nef_access_token')
         ans = input("Do you want to test Session-with-QoS API? (Y/n) ")
@@ -203,16 +244,39 @@ if __name__ == '__main__':
             last_response_from_nef = sessionqos_subscription(nef_url,
                                                              nef_access_token,
                                                              folder_path_for_certificates_and_capif_api_key,
-                                                             capif_host, capif_https_port, nef_callback)
+                                                             capif_host,
+                                                             capif_https_port,
+                                                             nef_callback)
             r.set('last_response_from_nef', str(last_response_from_nef))
             print("{}\n".format(last_response_from_nef))
-            print("\n---- IMPORTANT ----")
-            print(
-                "To delete QoS subscription, execute the following command (outside of the container, from a host that can see NEF IP and 'curl' is installed):\n")
-            sub_resource = last_response_from_nef['link']
-            sub_resource_final = sub_resource.replace('host.docker.internal', 'localhost')
-            print("curl --request DELETE {} --header 'Authorization: Bearer {}'".format(sub_resource_final, nef_access_token))
-            print("\n-------------------\n")
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+    # Delete all Location-aware subscriptions (e.g. LOCATION_REPORTING, UE_REACHABILITY, LOSS_OF_CONNECTIVITY)
+    try:
+        nef_access_token = r.get('nef_access_token')
+        ans = input("Do you want to delete all existing Location subscriptions (LOCATION_REPORTING, UE_REACHABILITY, LOSS_OF_CONNECTIVITY)? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            last_response_from_nef = read_and_delete_all_existing_location_subscriptions(nef_url,
+                                                                                         nef_access_token,
+                                                                                         folder_path_for_certificates_and_capif_api_key,
+                                                                                         capif_host,
+                                                                                         capif_https_port)
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+    # Delete all QoS-aware subscriptions
+    try:
+        nef_access_token = r.get('nef_access_token')
+        ans = input("Do you want to delete all existing QoS subscriptions? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            last_response_from_nef = read_and_delete_all_existing_qos_subscriptions(nef_url,
+                                                                                    nef_access_token,
+                                                                                    folder_path_for_certificates_and_capif_api_key,
+                                                                                    capif_host,
+                                                                                    capif_https_port)
     except Exception as e:
         status_code = e.args[1]
         print(e)
