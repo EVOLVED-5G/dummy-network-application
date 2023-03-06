@@ -6,5 +6,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.DS_Store
+*.key
+*.csr
+*.crt
+demo_values.json
 pythonnetapp/capif_onboarding/*
 !pythonnetapp/capif_onboarding/.gitkeep
