@@ -4,7 +4,7 @@
 
 | Container             | Folder                | Description                                      |
 |-----------------------|-----------------------|--------------------------------------------------|
-| python_app            | python_application    | Python NetApp (communication example with CAPIF) |
+| python_app            | python_application    | Python Application (communication example with CAPIF) |
 | redis_db              | -                     | DB to store info exchanged with CAPIF            |
 | nef_callback_server   | nef_callback_server   | Server implementing NEF callback endpoints       |
 | capif_callback_server | capif_callback_server | Server implementing CAPIF callback endpoints     |
@@ -74,21 +74,21 @@ get *key*
 ./cleanup_docker_containers.sh
 ```
 
-## Use Python NetApp
+## Use Python Application
 
 ```shell
 cd src/
-# Access Python NetApp
+# Access Python Application
 ./terminal_to_python_app.sh
 
 # Inside the container
-# Test NetApp with CAPIF and NEF
+# Test Network Application with CAPIF and NEF
 python3 0_network_app_to_nef.py
 
-# Test NetApp with CAPIF and TSN
+# Test Network Application with CAPIF and TSN
 python3 0_network_app_to_tsn.py
 
-# Test NetApp with CAPIF and dummy_aef
+# Test Network Application with CAPIF and dummy_aef
 # IMPORTANT: to test with dummy_aef, do not deploy NEF or/and TSN. It must be tested on its own
 python3 1_network_app_to_capif.py
 python3 2_network_app_to_events.py
