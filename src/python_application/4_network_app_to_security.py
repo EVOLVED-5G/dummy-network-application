@@ -191,7 +191,7 @@ if __name__ == '__main__':
         if 'aef_id_1' in demo_values and 'api_name_1' in demo_values:
             token = get_security_token(capif_ip, invokerID, capif_access_token, ccf_discover_url, demo_values['aef_id_1'], demo_values['api_name_1'])
             print(colored(json.dumps(token, indent=2),"yellow"))
-            demo_values["netapp_service_token"] = token["access_token"]
+            demo_values["network_app_service_token"] = token["access_token"]
             print(colored("Obtained Security Token","yellow"))
 
     except Exception as e:

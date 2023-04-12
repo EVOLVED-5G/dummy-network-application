@@ -102,12 +102,12 @@ python3 7_netapp_to_service_pki.py
 
 # Outside container, for clean-up
 (
-sudo rm ./pythonnetapp/capif_onboarding/*
-sudo rm ./pythonnetapp/demo_values.json 
-sudo rm ./pythonnetapp/ca.crt 
-sudo rm ./pythonnetapp/cert_req.csr 
-sudo rm ./pythonnetapp/dummy.crt 
-sudo rm ./pythonnetapp/private.key 
-sudo rm ./pythonnetapp/ca_service.crt
+sudo rm ./python_application/capif_onboarding/*
+sudo rm ./python_application/demo_values.json 
+sudo rm ./python_application/ca.crt 
+sudo rm ./python_application/cert_req.csr 
+sudo rm ./python_application/dummy.crt 
+sudo rm ./python_application/private.key 
+sudo rm ./python_application/ca_service.crt
 )
 ```
