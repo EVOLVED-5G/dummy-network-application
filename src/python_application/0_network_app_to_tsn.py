@@ -61,7 +61,7 @@ def apply_tsn_profile():
         f"{profile_configuration.get_profile_configuration_parameters()} to Network Application {network_app_name} "
     )
     clearance_token = tsn.apply_tsn_profile_to_netapp(
-        profile={}, tsn_netapp_identifier=tsn_network_app_identifier
+        profile=profile_to_apply, tsn_netapp_identifier=tsn_network_app_identifier
     )
     print(
         f"The profile configuration has been applied to the network_app. The returned token {clearance_token} can be used "
