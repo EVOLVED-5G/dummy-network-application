@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cp env_to_copy.dev .env
+
 HOSTNAME=capifcore
 if [ "$#" -eq 1 ]; then
     HOSTNAME=$1

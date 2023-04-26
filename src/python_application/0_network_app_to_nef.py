@@ -25,17 +25,17 @@ def request_nef_token(nef_host, username, password):
 
 def read_and_delete_all_existing_qos_subscriptions(host, nef_token, certificate_folder, capifhost, capifport):
     # How to get all subscriptions
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     qos_awareness = QosAwareness(host, nef_token, certificate_folder, capifhost, capifport)
 
     try:
-        all_subscriptions = qos_awareness.get_all_subscriptions(netapp_id)
+        all_subscriptions = qos_awareness.get_all_subscriptions(network_app_id)
         print(all_subscriptions)
 
         for subscription in all_subscriptions:
             id = subscription.link.split("/")[-1]
             print("Deleting subscription with id: " + id)
-            qos_awareness.delete_subscription(netapp_id, id)
+            qos_awareness.delete_subscription(network_app_id, id)
     except ApiException as ex:
         if ex.status == 404:
             print("No active transcriptions found")
@@ -45,18 +45,18 @@ def read_and_delete_all_existing_qos_subscriptions(host, nef_token, certificate_
 
 def read_and_delete_all_existing_location_subscriptions(host, nef_token, certificate_folder, capifhost, capifport):
     # How to get all subscriptions
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     location_subscriber = LocationSubscriber(host, nef_token, certificate_folder, capifhost, capifport)
 
     try:
-        all_subscriptions = location_subscriber.get_all_subscriptions(netapp_id, 0, 100)
+        all_subscriptions = location_subscriber.get_all_subscriptions(network_app_id, 0, 100)
 
         print(all_subscriptions)
 
         for subscription in all_subscriptions:
             id = subscription.link.split("/")[-1]
             print("Deleting subscription with id: " + id)
-            location_subscriber.delete_subscription(netapp_id, id)
+            location_subscriber.delete_subscription(network_app_id, id)
     except ApiException as ex:
         if ex.status == 404:
             print("No active transcriptions found")
@@ -66,13 +66,13 @@ def read_and_delete_all_existing_location_subscriptions(host, nef_token, certifi
 
 def monitor_subscription(num_of_reports, host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     location_subscriber = LocationSubscriber(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
     print(nef_token)
 
     subscription = location_subscriber.create_subscription(
-        netapp_id=netapp_id,
+        netapp_id=network_app_id,
         external_id=external_id,
         notification_destination=callback_server,
         maximum_number_of_reports=num_of_reports,
@@ -85,12 +85,12 @@ def monitor_subscription(num_of_reports, host, nef_token, certificate_folder, ca
 
 def connection_monitoring_ue_reachability(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     connection_monitor = ConnectionMonitor(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
 
     subscription_when_not_connected = connection_monitor.create_subscription(
-        netapp_id=netapp_id,
+        netapp_id=network_app_id,
         external_id=external_id,
         notification_destination=callback_server,
         monitoring_type=ConnectionMonitor.MonitoringType.INFORM_WHEN_CONNECTED,
@@ -105,12 +105,12 @@ def connection_monitoring_ue_reachability(host, nef_token, certificate_folder, c
 
 def connection_monitoring_loss_of_conn(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
     expire_time = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).isoformat() + "Z"
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     connection_monitor = ConnectionMonitor(host, nef_token, certificate_folder, capifhost, capifport)
     external_id = "10001@domain.com"
 
     subscription_when_not_connected = connection_monitor.create_subscription(
-        netapp_id=netapp_id,
+        netapp_id=network_app_id,
         external_id=external_id,
         notification_destination=callback_server,
         monitoring_type=ConnectionMonitor.MonitoringType.INFORM_WHEN_NOT_CONNECTED,
@@ -124,7 +124,7 @@ def connection_monitoring_loss_of_conn(host, nef_token, certificate_folder, capi
 
 
 def sessionqos_subscription(host, nef_token, certificate_folder, capifhost, capifport, callback_server):
-    netapp_id = "myNetapp"
+    network_app_id = "myNetworkApp"
     qos_awereness = QosAwareness(host, nef_token, certificate_folder, capifhost, capifport)
     equipment_network_identifier = "10.0.0.1"
     network_identifier = QosAwareness.NetworkIdentifier.IP_V4_ADDRESS
@@ -142,7 +142,7 @@ def sessionqos_subscription(host, nef_token, certificate_folder, capifhost, capi
                                      )
 
     subscription = qos_awereness.create_guaranteed_bit_rate_subscription(
-        netapp_id=netapp_id,
+        netapp_id=network_app_id,
         equipment_network_identifier=equipment_network_identifier,
         network_identifier=network_identifier,
         notification_destination=callback_server,

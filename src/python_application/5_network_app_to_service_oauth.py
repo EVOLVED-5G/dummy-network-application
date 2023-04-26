@@ -11,10 +11,10 @@ from termcolor import colored
 # Get environment variables
 
 
-def demo_to_aef(demo_ip, demo_port, demo_url, name, demo_values):
+def demo_to_aef(demo_ip, demo_port, demo_url, jwt_token, name):
 
     print(colored("Using AEF Service API","yellow"))
-    url = "https://{}:{}{}".format(demo_ip, demo_port, demo_url)
+    url = "http://{}:{}{}".format(demo_ip, demo_port, demo_url)
     #url = "http://python_aef:8086/hello"
 
     payload = json.dumps({
@@ -24,11 +24,8 @@ def demo_to_aef(demo_ip, demo_port, demo_url, name, demo_values):
     files = {}
     headers = {
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer '+jwt_token
     }
-
-    ca_service = open("ca_service.crt", "w")
-    ca_service.write(demo_values["ca_service"])
-    ca_service.close()
 
     try:
         print(colored("''''''''''REQUEST'''''''''''''''''","blue"))
@@ -36,7 +33,7 @@ def demo_to_aef(demo_ip, demo_port, demo_url, name, demo_values):
         print(colored(f"Request Headers: {headers}", "blue"))
         print(colored(f"Request Body: {json.dumps(payload)}", "blue"))
         print(colored(f"''''''''''REQUEST'''''''''''''''''", "blue"))
-        response = requests.request("POST", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify="ca_service.crt")
+        response = requests.request("POST", url, headers=headers, data=payload, files=files, cert=('dummy.crt', 'private.key'), verify=False)
         response.raise_for_status()
         response_payload = json.loads(response.text)
         print(colored("''''''''''RESPONSE'''''''''''''''''","green"))
@@ -75,9 +72,6 @@ if __name__ == '__main__':
     # capif_ip = config.get("credentials", "capif_ip")
     # capif_port = config.get("credentials", "capif_port")
 
-    with open('demo_values.json', 'r') as demo_file:
-        demo_values = json.load(demo_file)
-
     capif_ip = os.getenv('CAPIF_HOSTNAME')
     capif_port = os.getenv('CAPIF_PORT')
 
@@ -88,15 +82,15 @@ if __name__ == '__main__':
         demo_values = json.load(demo_file)
 
     try:
-        if 'ca_service' in demo_values:
+        if 'network_app_service_token' in demo_values:
 
             print(colored("Doing test","yellow"))
-            #jwt_token = demo_values['netapp_service_token']
+            jwt_token = demo_values['network_app_service_token']
             invokerID = demo_values['invokerID']
-            demo_ip = demo_values['demo_ipv4_addr_0']
-            demo_port = demo_values['demo_port_0']
-            demo_url = demo_values['demo_url_0']
-            result = demo_to_aef(demo_ip, demo_port, demo_url, input_name, demo_values)
+            demo_ip = demo_values['demo_ipv4_addr_1']
+            demo_port = demo_values['demo_port_1']
+            demo_url = demo_values['demo_url_1']
+            result = demo_to_aef(demo_ip, demo_port, demo_url, jwt_token, input_name)
             print(colored("Success","yellow"))
     except Exception as e:
         status_code = e.args[0]

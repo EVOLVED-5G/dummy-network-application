@@ -39,7 +39,7 @@ def create_csr(csr_file_path):
     return csr_request
 
 
-def register_netapp_to_capif(capif_ip, capif_port, username, password, role, description, cn):
+def register_network_app_to_capif(capif_ip, capif_port, username, password, role, description, cn):
 
     print(colored("Registering API Invoker to CAPIF","yellow"))
     url = "http://{}:{}/register".format(capif_ip, capif_port)
@@ -117,9 +117,9 @@ def get_capif_token(capif_ip, capif_port, username, password, role):
         raise Exception(err.response.text, err.response.status_code)
 
 
-def onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, jwt_token, ccf_url):
+def onboard_network_app_to_capif(capif_ip, capif_callback_ip, capif_callback_port, jwt_token, ccf_url):
 
-    print(colored("Onboarding netapp to CAPIF","yellow"))
+    print(colored("Onboarding network application to CAPIF","yellow"))
     url = 'https://{}/{}'.format(capif_ip, ccf_url)
 
     csr_request = create_csr("cert_req.csr")
@@ -192,12 +192,12 @@ if __name__ == '__main__':
     demo_values = {}
 
     try:
-        if 'netappID' not in demo_values:
-            netappID, ccf_onboarding_url, ccf_discover_url = register_netapp_to_capif(capif_ip, capif_port, username, password, role, description, cn)
-            demo_values['netappID'] = netappID
+        if 'network_app_id' not in demo_values:
+            network_app_id, ccf_onboarding_url, ccf_discover_url = register_network_app_to_capif(capif_ip, capif_port, username, password, role, description, cn)
+            demo_values['network_app_id'] = network_app_id
             demo_values['ccf_onboarding_url'] = ccf_onboarding_url
             demo_values['ccf_discover_url'] = ccf_discover_url
-            print(colored(f"NetAppID: {netappID}\n","yellow"))
+            print(colored(f"NetworkAppID: {network_app_id}\n","yellow"))
     except Exception as e:
         status_code = e.args[0]
         if status_code == 409:
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             print(e)
 
     try:
-        if 'capif_access_token' not in demo_values and 'netappID' in demo_values:
+        if 'capif_access_token' not in demo_values and 'network_app_id' in demo_values:
             capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             demo_values['capif_access_token'] = capif_access_token
             print(colored(f"Capif Token: {capif_access_token}\n","yellow"))
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         if 'invokerID' not in demo_values:
             capif_access_token = demo_values['capif_access_token']
             ccf_onboarding_url = demo_values['ccf_onboarding_url']
-            invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, demo_values['capif_access_token'], ccf_onboarding_url)
+            invokerID = onboard_network_app_to_capif(capif_ip, capif_callback_ip, capif_callback_port, demo_values['capif_access_token'], ccf_onboarding_url)
             demo_values['invokerID'] = invokerID
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:
@@ -230,9 +230,9 @@ if __name__ == '__main__':
         if status_code == 401:
             capif_access_token = get_capif_token(capif_ip, capif_port, username, password, role)
             demo_values['capif_access_token'] = capif_access_token
-            ccf_onboarding_url = r.get('ccf_onboarding_url')
+            ccf_onboarding_url = demo_values['ccf_onboarding_url']
             print("New Capif Token: {}\n".format(capif_access_token))
-            invokerID = onboard_netapp_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
+            invokerID = onboard_network_app_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
             data_invoker = [{"invokerID": invokerID}]
             demo_values['invokerID'] = invokerID
             print(colored(f"ApiInvokerID: {invokerID}\n","yellow"))

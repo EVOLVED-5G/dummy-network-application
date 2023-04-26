@@ -9,6 +9,7 @@ __pycache__/
 *.key
 *.csr
 *.crt
+.env
 demo_values.json
 pythonnetapp/capif_onboarding/*
 !pythonnetapp/capif_onboarding/.gitkeep

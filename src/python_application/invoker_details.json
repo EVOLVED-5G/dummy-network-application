@@ -1,5 +1,5 @@
 {
-  "notificationDestination" : "http://X:Y/netapp_callback",
+  "notificationDestination" : "http://X:Y/capifcallbacks",
   "supportedFeatures" : "fffffff",
   "apiInvokerInformation" : "dummy",
   "websockNotifConfig" : {

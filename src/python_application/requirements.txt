@@ -1,5 +1,5 @@
 requests == 2.26.0
-evolved5g
+git+https://github.com/EVOLVED-5G/SDK-CLI.git@libraries
 configparser
 redis
 pyopenssl
