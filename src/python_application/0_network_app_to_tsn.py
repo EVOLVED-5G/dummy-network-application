@@ -30,13 +30,15 @@ tsn = TSNManager(  # Initialization of the TNSManager
 
 def get_profiles():
 
-    profiles = tsn.get_tsn_profiles()
-    print(f"Found {len(profiles)} profiles")
-    for profile in profiles:
-        profile_configuration = profile.get_configuration_for_tsn_profile()
-
-        print(
-            f"Profile {profile.name} with configuration parameters {profile_configuration.get_profile_configuration_parameters()}")
+    # profiles = tsn.get_tsn_profiles()
+    # print(f"Found {len(profiles)} profiles")
+    # for profile in profiles:
+    #     profile_configuration = profile.get_configuration_for_tsn_profile()
+    #
+    #     print(
+    #         f"Profile {profile.name} with configuration parameters {profile_configuration.get_profile_configuration_parameters()}")
+    # return profiles
+    return tsn.get_tsn_profiles()
 
 
 def apply_tsn_profile():
@@ -94,7 +96,13 @@ if __name__ == '__main__':
     try:
         ans = input("Do you want to test TSN API get_profiles? (Y/n) ")
         if ans == "Y" or ans == 'y':
-            get_profiles()
+            profiles = get_profiles()
+            print(f"Found {len(profiles)} profiles")
+            for profile in profiles:
+                profile_configuration = profile.get_configuration_for_tsn_profile()
+
+                print(
+                    f"Profile {profile.name} with configuration parameters {profile_configuration.get_profile_configuration_parameters()}")
     except Exception as e:
         status_code = e.args[1]
         print(e)
