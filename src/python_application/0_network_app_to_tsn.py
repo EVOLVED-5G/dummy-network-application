@@ -18,7 +18,9 @@ network_app_ids_tokens = (
 )  # Stores the clearance token of each profile application to a Network Application
 network_app_name = "MyNetworkApp1"  # The name of our Network Application
 
-tsn = TSNManager(  # Initialization of the TNSManager
+
+def initialize_tsn():
+    tsn_manager = TSNManager(  # Initialization of the TNSManager
         folder_path_for_certificates_and_capif_api_key=folder_path_for_certificates_and_capif_api_key,
         capif_host=capif_host,
         capif_https_port=capif_https_port,
@@ -27,17 +29,12 @@ tsn = TSNManager(  # Initialization of the TNSManager
         tsn_port=tsn_port
     )
 
+    return tsn_manager
+
 
 def get_profiles():
 
-    # profiles = tsn.get_tsn_profiles()
-    # print(f"Found {len(profiles)} profiles")
-    # for profile in profiles:
-    #     profile_configuration = profile.get_configuration_for_tsn_profile()
-    #
-    #     print(
-    #         f"Profile {profile.name} with configuration parameters {profile_configuration.get_profile_configuration_parameters()}")
-    # return profiles
+    tsn = initialize_tsn()
     return tsn.get_tsn_profiles()
 
 
@@ -45,6 +42,7 @@ def apply_tsn_profile():
     """
     Demonstrates how to apply a TSN profile configuration to a Network Application
     """
+    tsn = initialize_tsn()
     profiles = tsn.get_tsn_profiles()
     # For demonstration purposes,  let's select the last profile to apply,
     profile_to_apply = profiles[-1]
@@ -73,10 +71,11 @@ def apply_tsn_profile():
     return tsn_network_app_identifier,clearance_token
 
 
-def clear_profile_configuration(tsn_network_app_identifier: tsn.TSNNetappIdentifier, clearance_token:str):
+def clear_profile_configuration(tsn_network_app_identifier, clearance_token):
     """
     Demonstrates how to clear a previously applied TSN profile configuration from a Network Application
     """
+    tsn = initialize_tsn()
     tsn.clear_profile_for_tsn_netapp_identifier(tsn_network_app_identifier,clearance_token)
     print(f"Cleared TSN configuration from {network_app_name}")
 
@@ -104,7 +103,7 @@ if __name__ == '__main__':
                 print(
                     f"Profile {profile.name} with configuration parameters {profile_configuration.get_profile_configuration_parameters()}")
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         print(e)
 
     try:
@@ -113,7 +112,7 @@ if __name__ == '__main__':
             # When we apply a profile we get back an identifier and a clearance token.
             (tsn_network_app_id, clear_token) = apply_tsn_profile()
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         print(e)
 
     print(tsn_network_app_id)
@@ -125,5 +124,5 @@ if __name__ == '__main__':
             # These can be used to clear the existing configuration
             clear_profile_configuration(tsn_network_app_id, clear_token)
     except Exception as e:
-        status_code = e.args[1]
+        status_code = e.args[0]
         print(e)

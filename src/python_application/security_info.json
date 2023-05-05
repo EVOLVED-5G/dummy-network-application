@@ -9,7 +9,7 @@
       },
       {
         "prefSecurityMethods": [
-          "Oauth"
+          "OAUTH"
         ],
         "authenticationInfo": "string",
         "authorizationInfo": "string"
