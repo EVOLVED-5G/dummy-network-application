@@ -19,3 +19,4 @@ TSN_IP=host.docker.internal
 TSN_PORT=8899
 NEF_CALLBACK_IP=host.docker.internal
 NEF_CALLBACK_PORT=8085
+ENVIRONMENT_MODE=development

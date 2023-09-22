@@ -1,8 +1,9 @@
 import redis
 import os
 import datetime
+import json
 
-from evolved5g.sdk import LocationSubscriber, QosAwareness, ConnectionMonitor
+from evolved5g.sdk import LocationSubscriber, QosAwareness, ConnectionMonitor, CAPIFInvokerConnector
 from evolved5g.swagger_client import UsageThreshold, Configuration, ApiClient, LoginApi
 from evolved5g.swagger_client.rest import ApiException
 
@@ -158,6 +159,13 @@ def sessionqos_subscription(host, certificate_folder, capifhost, capifport, call
     return qos_awereness_response
 
 
+def read_capif_registration_info():
+    with open('capif_registration.json') as json_file:
+        data = json.load(json_file)
+
+        return data
+
+
 if __name__ == '__main__':
 
     r = redis.Redis(
@@ -255,6 +263,36 @@ if __name__ == '__main__':
                                                                                     folder_path_for_certificates_and_capif_api_key,
                                                                                     capif_host,
                                                                                     capif_https_port)
+    except Exception as e:
+        status_code = e.args[1]
+        print(e)
+
+    # Offboard and Deregister
+    try:
+        ans = input("Do you want to offboard and deregister your NetworkApp from CAPIF? (Y/n) ")
+        if ans == "Y" or ans == 'y':
+            capif_reg_info = read_capif_registration_info()
+
+            capif_connector = CAPIFInvokerConnector(
+                folder_to_store_certificates=capif_reg_info['folder_to_store_certificates'],
+                capif_host=capif_reg_info['capif_host'],
+                capif_http_port=capif_reg_info['capif_http_port'],
+                capif_https_port=capif_reg_info['capif_https_port'],
+                capif_netapp_username=capif_reg_info['capif_netapp_username'],
+                capif_netapp_password=capif_reg_info['capif_netapp_password'],
+                capif_callback_url=capif_reg_info['capif_callback_url'],
+                description=capif_reg_info['description'],
+                csr_common_name=capif_reg_info['csr_common_name'],
+                csr_organizational_unit=capif_reg_info['csr_organizational_unit'],
+                csr_organization=capif_reg_info['csr_organization'],
+                crs_locality=capif_reg_info['crs_locality'],
+                csr_state_or_province_name=capif_reg_info['csr_state_or_province_name'],
+                csr_country_name=capif_reg_info['csr_country_name'],
+                csr_email_address=capif_reg_info['csr_email_address']
+                )
+
+            capif_connector.offboard_and_deregister_netapp()
+
     except Exception as e:
         status_code = e.args[1]
         print(e)
