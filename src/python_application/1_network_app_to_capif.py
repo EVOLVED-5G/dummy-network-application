@@ -222,7 +222,7 @@ if __name__ == '__main__':
         if 'invokerID' not in demo_values:
             capif_access_token = demo_values['capif_access_token']
             ccf_onboarding_url = demo_values['ccf_onboarding_url']
-            invokerID = onboard_network_app_to_capif(capif_ip, capif_callback_ip, capif_callback_port, demo_values['capif_access_token'], ccf_onboarding_url)
+            invokerID = onboard_network_app_to_capif(capif_ip, capif_callback_ip, capif_callback_port, capif_access_token, ccf_onboarding_url)
             demo_values['invokerID'] = invokerID
             print("ApiInvokerID: {}\n".format(invokerID))
     except Exception as e:

@@ -11,5 +11,5 @@ __pycache__/
 *.crt
 .env
 demo_values.json
-pythonnetapp/capif_onboarding/*
-!pythonnetapp/capif_onboarding/.gitkeep
+src/python_application/capif_onboarding/*
+!src/pythonnetapp/capif_onboarding/.gitkeep
